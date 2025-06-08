@@ -29,7 +29,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::put('/group/{group}', [GroupController::class, 'update'])->name('group.update');
     Route::delete('/group/{group}', [GroupController::class, 'destroy'])->name('group.destroy');
 
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['asesor'])->group(function () {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         Route::post('/user/set-asesor/{user}', [UserController::class, 'setRoleAsesor'])->name('user.setRoleAsesor');
         Route::post('/user/set-admin/{user}', [UserController::class, 'setRoleAdmin'])->name('user.setRoleAdmin');

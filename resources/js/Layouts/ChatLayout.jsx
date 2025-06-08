@@ -16,8 +16,10 @@ const ChatLayout = ({ children, handleStatusChange }) => {
     const selectedConversation = page.props.selectedConversation;
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
+    const [localGrupos, setLocalGrupos] = useState(grupos);
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [newState, setNewState] = useState(false);
     const { emit, on } = useEventBus();
     const currentUser = page.props.auth.user;
     const [searchTerm, setSearchTerm] = useState("");
@@ -32,6 +34,10 @@ const ChatLayout = ({ children, handleStatusChange }) => {
         list.filter((c) => c.name.toLowerCase().includes(searchTerm));
 
     const isUserOnline = (userId) => onlineUsers[userId];
+
+    useEffect(() => {
+        setLocalGrupos(grupos);
+    }, [grupos]);
 
     const messageCreated = (message) => {
         setLocalConversations((oldUsers) => {
@@ -69,9 +75,50 @@ const ChatLayout = ({ children, handleStatusChange }) => {
         messageCreated(prevMessage);
     };
 
+    const changeConversationStatus = (conversation, statusId) => {
+        if (conversation.is_group) {
+            axios
+                .post(route("group.changeStatus", [conversation.id, statusId]))
+                .then((res) => {
+                    setLocalGrupos((prevGrupos) =>
+                        prevGrupos.map((grupo) => {
+                            if (grupo.id === conversation.id) {
+                                return {
+                                    ...grupo,
+                                    code_status: statusId,
+                                };
+                            }
+                            return grupo;
+                        })
+                    );
+                    emit(
+                        "toast.show",
+                        res.data.message || "Estado del grupo actualizado"
+                    );
+                })
+                .catch((err) => {
+                    console.error(
+                        "Error al actualizar el estado del grupo:",
+                        err
+                    );
+                    emit(
+                        "toast.show",
+                        "Error: No se pudo actualizar el estado"
+                    );
+                });
+        }
+    };
+
     useEffect(() => {
         const offCreated = on("message.created", messageCreated);
         const offDeleted = on("message.deleted", messageDeleted);
+        const offChangeStatus = on(
+            "group.changeStatus",
+            ([conversation, statusId]) => {
+                changeConversationStatus(conversation, statusId);
+            }
+        );
+
         const offModalShow = on("GroupModal.show", (group) => {
             setShowGroupModal(true);
         });
@@ -96,6 +143,7 @@ const ChatLayout = ({ children, handleStatusChange }) => {
             offDeleted();
             offModalShow();
             offGroupDelete();
+            offChangeStatus();
         };
     }, [on]);
 
@@ -193,6 +241,7 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                                 <UserPlusIcon className="h-5 w-5 mr-2" />
                                 Add New User
                             </PrimaryButton>
+
                             <div className="p-1"></div>
                             <TextInput
                                 onKeyUp={onSearch}
@@ -220,20 +269,24 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                             </div>
                             <div className="p-3">
                                 Grupos
-                                {filterBySearch(grupos).map((conversation) => (
-                                    <ConversationItem
-                                        key={`${
-                                            conversation.is_group
-                                                ? "group_"
-                                                : "user_"
-                                        }${conversation.id}`}
-                                        conversation={conversation}
-                                        online={!!isUserOnline(conversation.id)}
-                                        selectedConversation={
-                                            selectedConversation
-                                        }
-                                    />
-                                ))}
+                                {filterBySearch(localGrupos).map(
+                                    (conversation) => (
+                                        <ConversationItem
+                                            key={`${
+                                                conversation.is_group
+                                                    ? "group_"
+                                                    : "user_"
+                                            }${conversation.id}`}
+                                            conversation={conversation}
+                                            online={
+                                                !!isUserOnline(conversation.id)
+                                            }
+                                            selectedConversation={
+                                                selectedConversation
+                                            }
+                                        />
+                                    )
+                                )}
                             </div>
 
                             <div className="p-3">

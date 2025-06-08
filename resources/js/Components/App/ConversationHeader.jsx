@@ -57,11 +57,10 @@ const ConversationHeader = ({ selectedConversation }) => {
         axios
             .delete(route("group.destroy", selectedConversation.id))
             .then((res) => {
-                console.log(res);
                 emit("toast.show", res.data.message);
             })
             .catch((err) => {
-                console.log(err);
+                console.error(err);
             });
     };
 
@@ -72,7 +71,6 @@ const ConversationHeader = ({ selectedConversation }) => {
             )
             .then((res) => {
                 emit("toast.show", res.data.message);
-                console.log(res.data);
             })
             .catch((err) => {
                 console.error(err);
@@ -80,8 +78,6 @@ const ConversationHeader = ({ selectedConversation }) => {
     };
 
     const changeStatus = (newStatus) => {
-        const previousStatus = selectedConversation.status;
-
         axios
             .post(
                 route("group.changeStatus", [
@@ -132,7 +128,7 @@ const ConversationHeader = ({ selectedConversation }) => {
                         </div>
                     </div>
                     {selectedConversation.is_group && (
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 items-center">
                             <GroupDescriptionPopover
                                 description={selectedConversation.description}
                             />
@@ -171,125 +167,137 @@ const ConversationHeader = ({ selectedConversation }) => {
                                     </div>
                                 </>
                             )}
+                            {selectedConversation.is_group &&
+                                !selectedConversation.is_admin &&
+                                !selectedConversation.is_asesor &&
+                                currentUser.is_asesor && (
+                                    <div className="flex flex-row gap-2 items-start">
+                                        <Menu
+                                            as="div"
+                                            className="relative inline-block text-left"
+                                        >
+                                            <Menu.Button className="flex items-center rounded-md px-3 py-2 text-sm text-gray-100 hover:bg-black/30 bg-gray-700">
+                                                <UserIcon className="w-4 h-4 mr-2" />
+                                                Asign Asesor
+                                            </Menu.Button>
+                                            <Transition
+                                                as={Fragment}
+                                                enter="transition ease-out duration-100"
+                                                enterFrom="transform opacity-0 scale-95"
+                                                enterTo="transform opacity-100 scale-100"
+                                                leave="transition ease-in duration-75"
+                                                leaveFrom="transform opacity-100 scale-100"
+                                                leaveTo="transform opacity-0 scale-95"
+                                            >
+                                                <Menu.Items className="absolute light-full top-10 right-0 ml-2 w-48 rounded-md bg-gray-800 shadow-lg z-50">
+                                                    <div className="px-1 py-1">
+                                                        {sortedAsesors &&
+                                                            sortedAsesors.map(
+                                                                (asesor) => (
+                                                                    <Menu.Item
+                                                                        key={
+                                                                            asesor.id
+                                                                        }
+                                                                    >
+                                                                        {({
+                                                                            active,
+                                                                        }) => (
+                                                                            <button
+                                                                                onClick={() =>
+                                                                                    asignAsesor(
+                                                                                        asesor.id
+                                                                                    )
+                                                                                }
+                                                                                className={`${
+                                                                                    active
+                                                                                        ? "bg-black/30 text-white"
+                                                                                        : "text-gray-100"
+                                                                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                                                            >
+                                                                                <h3 className="text-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                                                                                    {
+                                                                                        asesor.name
+                                                                                    }
+                                                                                </h3>
+                                                                            </button>
+                                                                        )}
+                                                                    </Menu.Item>
+                                                                )
+                                                            )}
+                                                    </div>
+                                                </Menu.Items>
+                                            </Transition>
+                                        </Menu>
+
+                                        <Menu
+                                            as="div"
+                                            className="relative inline-block text-left"
+                                        >
+                                            <Menu.Button className="flex items-center rounded-md px-3 py-2 text-sm text-gray-100 hover:bg-black/30 bg-gray-700">
+                                                <UserIcon className="w-4 h-4 mr-2" />
+                                                Cambiar Estado
+                                            </Menu.Button>
+                                            <Transition
+                                                as={Fragment}
+                                                enter="transition ease-out duration-100"
+                                                enterFrom="transform opacity-0 scale-95"
+                                                enterTo="transform opacity-100 scale-100"
+                                                leave="transition ease-in duration-75"
+                                                leaveFrom="transform opacity-100 scale-100"
+                                                leaveTo="transform opacity-0 scale-95"
+                                            >
+                                                <Menu.Items className="absolute light-full top-10 right-0 ml-2 w-48 rounded-md bg-gray-800 shadow-lg z-50">
+                                                    <div className="px-1 py-1">
+                                                        {status &&
+                                                            status.map(
+                                                                (status) => (
+                                                                    <Menu.Item
+                                                                        key={
+                                                                            status.id
+                                                                        }
+                                                                    >
+                                                                        {({
+                                                                            active,
+                                                                        }) => (
+                                                                            <button
+                                                                                onClick={() =>
+                                                                                    emit(
+                                                                                        "group.changeStatus",
+                                                                                        [
+                                                                                            selectedConversation,
+                                                                                            status.id,
+                                                                                        ]
+                                                                                    )
+                                                                                }
+                                                                                className={`${
+                                                                                    active
+                                                                                        ? "bg-black/30 text-white"
+                                                                                        : "text-gray-100"
+                                                                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                                                            >
+                                                                                <div className="flex justify-between items-center w-full">
+                                                                                    <h3 className="text-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                                                                                        {
+                                                                                            status.name
+                                                                                        }
+                                                                                    </h3>
+                                                                                    <div
+                                                                                        className={`w-3 h-3 ${status.color} rounded-full ml-2`}
+                                                                                    ></div>
+                                                                                </div>
+                                                                            </button>
+                                                                        )}
+                                                                    </Menu.Item>
+                                                                )
+                                                            )}
+                                                    </div>
+                                                </Menu.Items>
+                                            </Transition>
+                                        </Menu>
+                                    </div>
+                                )}
                         </div>
                     )}
-                    {selectedConversation.is_group &&
-                        !selectedConversation.is_admin &&
-                        !selectedConversation.is_asesor &&
-                        currentUser.is_asesor && (
-                            <div className="flex flex-row gap-2 items-start">
-                                <Menu
-                                    as="div"
-                                    className="relative inline-block text-left"
-                                >
-                                    <Menu.Button className="flex items-center rounded-md px-3 py-2 text-sm text-gray-100 hover:bg-black/30 bg-gray-700">
-                                        <UserIcon className="w-4 h-4 mr-2" />
-                                        Asign Asesor
-                                    </Menu.Button>
-                                    <Transition
-                                        as={Fragment}
-                                        enter="transition ease-out duration-100"
-                                        enterFrom="transform opacity-0 scale-95"
-                                        enterTo="transform opacity-100 scale-100"
-                                        leave="transition ease-in duration-75"
-                                        leaveFrom="transform opacity-100 scale-100"
-                                        leaveTo="transform opacity-0 scale-95"
-                                    >
-                                        <Menu.Items className="absolute light-full top-10 right-0 ml-2 w-48 rounded-md bg-gray-800 shadow-lg z-50">
-                                            <div className="px-1 py-1">
-                                                {sortedAsesors &&
-                                                    sortedAsesors.map(
-                                                        (asesor) => (
-                                                            <Menu.Item
-                                                                key={asesor.id}
-                                                            >
-                                                                {({
-                                                                    active,
-                                                                }) => (
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            asignAsesor(
-                                                                                asesor.id
-                                                                            )
-                                                                        }
-                                                                        className={`${
-                                                                            active
-                                                                                ? "bg-black/30 text-white"
-                                                                                : "text-gray-100"
-                                                                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                                                                    >
-                                                                        <h3 className="text-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
-                                                                            {
-                                                                                asesor.name
-                                                                            }
-                                                                        </h3>
-                                                                    </button>
-                                                                )}
-                                                            </Menu.Item>
-                                                        )
-                                                    )}
-                                            </div>
-                                        </Menu.Items>
-                                    </Transition>
-                                </Menu>
-
-                                <Menu
-                                    as="div"
-                                    className="relative inline-block text-left"
-                                >
-                                    <Menu.Button className="flex items-center rounded-md px-3 py-2 text-sm text-gray-100 hover:bg-black/30 bg-gray-700">
-                                        <UserIcon className="w-4 h-4 mr-2" />
-                                        Cambiar Estado
-                                    </Menu.Button>
-                                    <Transition
-                                        as={Fragment}
-                                        enter="transition ease-out duration-100"
-                                        enterFrom="transform opacity-0 scale-95"
-                                        enterTo="transform opacity-100 scale-100"
-                                        leave="transition ease-in duration-75"
-                                        leaveFrom="transform opacity-100 scale-100"
-                                        leaveTo="transform opacity-0 scale-95"
-                                    >
-                                        <Menu.Items className="absolute light-full top-10 right-0 ml-2 w-48 rounded-md bg-gray-800 shadow-lg z-50">
-                                            <div className="px-1 py-1">
-                                                {status &&
-                                                    status.map((status) => (
-                                                        <Menu.Item
-                                                            key={status.id}
-                                                        >
-                                                            {({ active }) => (
-                                                                <button
-                                                                    onClick={() =>
-                                                                        changeStatus(
-                                                                            status.id
-                                                                        )
-                                                                    }
-                                                                    className={`${
-                                                                        active
-                                                                            ? "bg-black/30 text-white"
-                                                                            : "text-gray-100"
-                                                                    } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                                                                >
-                                                                    <div className="flex justify-between items-center w-full">
-                                                                        <h3 className="text-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
-                                                                            {
-                                                                                status.name
-                                                                            }
-                                                                        </h3>
-                                                                        <div
-                                                                            className={`w-3 h-3 ${status.color} rounded-full ml-2`}
-                                                                        ></div>
-                                                                    </div>
-                                                                </button>
-                                                            )}
-                                                        </Menu.Item>
-                                                    ))}
-                                            </div>
-                                        </Menu.Items>
-                                    </Transition>
-                                </Menu>
-                            </div>
-                        )}
                 </div>
             )}
         </>
