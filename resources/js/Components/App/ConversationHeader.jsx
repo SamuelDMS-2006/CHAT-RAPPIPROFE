@@ -17,7 +17,7 @@ import { useState, useEffect } from "react";
 const ConversationHeader = ({ selectedConversation }) => {
     const page = usePage();
     const currentUser = page.props.auth.user;
-    const asesors = page.props.asesors;
+    const { asesores } = page.props.splitUsers;
     const { emit } = useEventBus();
     const [sortedAsesors, setSortedAsesors] = useState([]);
 
@@ -68,7 +68,7 @@ const ConversationHeader = ({ selectedConversation }) => {
     const asignAsesor = (asesorId) => {
         axios
             .post(
-                route("user.asignAsesor", [selectedConversation.id, asesorId])
+                route("group.asignAsesor", [selectedConversation.id, asesorId])
             )
             .then((res) => {
                 emit("toast.show", res.data.message);
@@ -80,27 +80,32 @@ const ConversationHeader = ({ selectedConversation }) => {
     };
 
     const changeStatus = (newStatus) => {
+        const previousStatus = selectedConversation.status;
+
         axios
             .post(
-                route("user.changeStatus", [selectedConversation.id, newStatus])
+                route("group.changeStatus", [
+                    selectedConversation.id,
+                    newStatus,
+                ])
             )
             .then((res) => {
                 emit("toast.show", res.data.message);
-                console.log(res.data);
             })
             .catch((err) => {
                 console.error(err);
+                emit("toast.show", "Error al actualizar el estado");
             });
     };
 
     useEffect(() => {
-        if (asesors && asesors.length > 0) {
-            const sorted = [...asesors].sort((a, b) =>
+        if (asesores && asesores.length > 0) {
+            const sorted = [...asesores].sort((a, b) =>
                 a.name.localeCompare(b.name)
             );
             setSortedAsesors(sorted);
         }
-    }, [asesors]);
+    }, [asesores]);
 
     return (
         <>
@@ -168,7 +173,8 @@ const ConversationHeader = ({ selectedConversation }) => {
                             )}
                         </div>
                     )}
-                    {!selectedConversation.is_admin &&
+                    {selectedConversation.is_group &&
+                        !selectedConversation.is_admin &&
                         !selectedConversation.is_asesor &&
                         currentUser.is_asesor && (
                             <div className="flex flex-row gap-2 items-start">

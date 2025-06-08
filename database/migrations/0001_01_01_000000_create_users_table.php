@@ -17,11 +17,10 @@ return new class extends Migration {
             $table->string('avatar')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->boolean('group_asigned')->default(0);
             $table->rememberToken();
             $table->boolean('is_admin')->default(false);
             $table->boolean('is_asesor')->default(false);
-            $table->boolean('asesor')->default(1);
-            $table->boolean('code_status')->default(1);
             $table->timestamp('blocked_at')->nullable();
             $table->timestamps();
         });

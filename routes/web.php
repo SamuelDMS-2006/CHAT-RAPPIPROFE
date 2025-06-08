@@ -33,8 +33,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         Route::post('/user/set-asesor/{user}', [UserController::class, 'setRoleAsesor'])->name('user.setRoleAsesor');
         Route::post('/user/set-admin/{user}', [UserController::class, 'setRoleAdmin'])->name('user.setRoleAdmin');
-        Route::post('/users/{user}/asign-asesor/{asesor}', [UserController::class, 'asignAsesor'])->name('user.asignAsesor');
-        Route::post('/users/{user}/change-status/{newStatus}', [UserController::class, 'changeStatus'])->name('user.changeStatus');
+        Route::post('/groups/{group}/asign-asesor/{asesor}', [GroupController::class, 'asignAsesor'])->name('group.asignAsesor');
+        Route::post('/groups/{group}/change-status/{newStatus}', [GroupController::class, 'changeStatus'])->name('group.changeStatus');
 
         Route::post('/user/block-unblock/{user}', [UserController::class, 'blockUnblock'])
             ->name('user.blockUnblock');

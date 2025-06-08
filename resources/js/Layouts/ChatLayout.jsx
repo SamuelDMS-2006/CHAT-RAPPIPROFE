@@ -1,16 +1,18 @@
 import ConversationItem from "@/Components/App/ConversationItem";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
+import PrimaryButton from "@/Components/PrimaryButton";
 import { useEventBus } from "@/EventBus";
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
+import { PencilSquareIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
+import NewUserModal from "@/Components/App/NewUserModal";
 import { useState } from "react";
 import { useEffect } from "react";
 
-const ChatLayout = ({ children }) => {
+const ChatLayout = ({ children, handleStatusChange }) => {
     const page = usePage();
     const conversations = page.props.conversations;
-    const { admins, asesores, usuarios } = page.props.splitUsers;
+    const { admins, asesores, usuarios, grupos } = page.props.splitUsers;
     const selectedConversation = page.props.selectedConversation;
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
@@ -19,6 +21,7 @@ const ChatLayout = ({ children }) => {
     const { emit, on } = useEventBus();
     const currentUser = page.props.auth.user;
     const [searchTerm, setSearchTerm] = useState("");
+    const [showNewUserModal, setShowNewUserModal] = useState(false);
 
     const onSearch = (ev) => {
         const search = ev.target.value.toLowerCase();
@@ -80,7 +83,6 @@ const ChatLayout = ({ children }) => {
 
             emit("toast.show", `Group "${name}" was deleted`);
 
-            console.log(selectedConversation);
             if (
                 !selectedConversation ||
                 (selectedConversation.is_group && selectedConversation.id == id)
@@ -184,6 +186,14 @@ const ChatLayout = ({ children }) => {
                             </div>
                         </div>
                         <div className="p-3">
+                            <PrimaryButton
+                                onClick={(ev) => setShowNewUserModal(true)}
+                                className="w-full"
+                            >
+                                <UserPlusIcon className="h-5 w-5 mr-2" />
+                                Add New User
+                            </PrimaryButton>
+                            <div className="p-1"></div>
                             <TextInput
                                 onKeyUp={onSearch}
                                 placeholder="Filter users and groups"
@@ -208,6 +218,24 @@ const ChatLayout = ({ children }) => {
                                     />
                                 ))}
                             </div>
+                            <div className="p-3">
+                                Grupos
+                                {filterBySearch(grupos).map((conversation) => (
+                                    <ConversationItem
+                                        key={`${
+                                            conversation.is_group
+                                                ? "group_"
+                                                : "user_"
+                                        }${conversation.id}`}
+                                        conversation={conversation}
+                                        online={!!isUserOnline(conversation.id)}
+                                        selectedConversation={
+                                            selectedConversation
+                                        }
+                                    />
+                                ))}
+                            </div>
+
                             <div className="p-3">
                                 Asesors
                                 {filterBySearch(asesores).map(
@@ -265,6 +293,10 @@ const ChatLayout = ({ children }) => {
             <GroupModal
                 show={showGroupModal}
                 onClose={() => setShowGroupModal(false)}
+            />
+            <NewUserModal
+                show={showNewUserModal}
+                onClose={(ev) => setShowNewUserModal(false)}
             />
         </>
     );

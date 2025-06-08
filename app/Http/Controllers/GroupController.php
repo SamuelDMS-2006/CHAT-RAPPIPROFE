@@ -23,6 +23,24 @@ class GroupController extends Controller
         return redirect()->back();
     }
 
+
+    public function asignAsesor(Group $group, $asesorId)
+    {
+        $group->update(['asesor' => (int) $asesorId]);
+        $message = "Asesor asignado correctamente.";
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function changeStatus(Group $group, $code_status)
+    {
+        $group->update(['code_status' => (int) $code_status]);
+        $message = "Estado asignado correctamente.";
+
+        return response()->json(['message' => $message]);
+    }
+
+
     /**
      * Update the specified resource in storage.
      */

@@ -14,6 +14,8 @@ class Group extends Model
         'description',
         'owner_id',
         'last_message_id',
+        'code_status',
+        'asesor'
     ];
 
     public function users()
@@ -56,6 +58,8 @@ class Group extends Model
             'description' => $this->description,
             'is_group' => true,
             'is_user' => false,
+            'code_status' => (int) $this->code_status,
+            'asesor' => (int) $this->asesor,
             'owner_id' => $this->owner_id,
             'users' => $this->users,
             'user_ids' => $this->users->pluck('id'),

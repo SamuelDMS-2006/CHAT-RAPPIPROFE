@@ -19,15 +19,12 @@ class MessageController extends Controller
     {
         $authUser = auth()->user();
 
-
         if (
             !$authUser->is_admin &&
-            !$authUser->is_asesor &&
-            $user->id != $authUser->asesor
+            !$authUser->is_asesor
         ) {
-            return redirect()->route('chat.user', ['user' => $authUser->asesor]);
+            return redirect()->route('chat.group', ['group' => $authUser->group_asigned]);
         }
-
 
         $messages = Message::where(function ($query) use ($authUser, $user) {
             $query->where('sender_id', $authUser->id)->where('receiver_id', $user->id)
@@ -43,6 +40,14 @@ class MessageController extends Controller
 
     public function byGroup(Group $group)
     {
+        $authUser = auth()->user();
+
+        if (!$authUser->is_admin && !$authUser->is_asesor) {
+            if ($group->id != $authUser->group_asigned) {
+                return redirect()->route('chat.group', ['group' => $authUser->group_asigned]);
+            }
+        }
+
         $messages = Message::where('group_id', $group->id)
             ->latest()
             ->paginate(10);
@@ -55,7 +60,6 @@ class MessageController extends Controller
 
     public function loadOlder(Message $message)
     {
-        // Load older messages that are older than the given message, sort them by the latest
         if ($message->group_id) {
             $messages = Message::where('created_at', '<', $message->created_at)
                 ->where('group_id', $message->group_id)
@@ -73,7 +77,6 @@ class MessageController extends Controller
                 ->paginate(10);
         }
 
-        // Return the messages as a resource
         return MessageResource::collection($messages);
     }
 

@@ -19,7 +19,6 @@ function Home({ selectedConversation = null, messages = null }) {
     const [previewAttachment, setPreviewAttachment] = useState({});
     const { on } = useEventBus();
     const currentUser = usePage().props.auth.user;
-
     const messageCreated = (message) => {
         if (
             selectedConversation &&
@@ -74,7 +73,6 @@ function Home({ selectedConversation = null, messages = null }) {
                     setNoMoreMessages(true);
                     return;
                 }
-                // Calculate how much is scrolled from bottom and scroll to the same position from bottom after messages are loaded
                 const scrollHeight = messagesCtrRef.current.scrollHeight;
                 const scrollTop = messagesCtrRef.current.scrollTop;
                 const clientHeight = messagesCtrRef.current.clientHeight;
@@ -123,7 +121,6 @@ function Home({ selectedConversation = null, messages = null }) {
     }, [messages]);
 
     useEffect(() => {
-        // Recover scroll from bottom after messages are loaded
         if (messagesCtrRef.current && scrollFromBottom !== null) {
             messagesCtrRef.current.scrollTop =
                 messagesCtrRef.current.scrollHeight -
@@ -158,7 +155,7 @@ function Home({ selectedConversation = null, messages = null }) {
 
     useEffect(() => {
         if (!messages && !(currentUser.is_admin || currentUser.is_asesor)) {
-            window.location.href = `/user/10`;
+            window.location.href = `/group/2`;
         }
     }, [messages, currentUser]);
 
@@ -177,9 +174,11 @@ function Home({ selectedConversation = null, messages = null }) {
                 )
             ) : (
                 <>
-                    <ConversationHeader
-                        selectedConversation={selectedConversation}
-                    />
+                    {(currentUser.is_admin || currentUser.is_asesor) && (
+                        <ConversationHeader
+                            selectedConversation={selectedConversation}
+                        />
+                    )}
                     <div
                         ref={messagesCtrRef}
                         className="flex-1 overflow-y-auto p-5"
@@ -222,7 +221,10 @@ function Home({ selectedConversation = null, messages = null }) {
 Home.layout = (page) => {
     return (
         <AuthenticatedLayout user={page.props.auth.user}>
-            <ChatLayout children={page} />
+            <ChatLayout
+                children={page}
+                handleStatusChange={page.props.handleStatusChange}
+            />
         </AuthenticatedLayout>
     );
 };

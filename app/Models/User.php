@@ -26,8 +26,6 @@ class User extends Authenticatable
         'password',
         'is_admin',
         'is_asesor',
-        'code_status',
-        'asesor',
     ];
 
     /**
@@ -106,8 +104,7 @@ class User extends Authenticatable
             'is_user' => true,
             'is_admin' => (bool) $this->is_admin,
             'is_asesor' => (bool) $this->is_asesor,
-            'code_status' => (int) $this->code_status,
-            'asesor' => (int) $this->asesor,
+            'group_asigned' => (int) $this->group_asigned,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'blocked_at' => $this->blocked_at,

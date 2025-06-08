@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Group;
 use App\Http\Resources\UserResource;
 use App\Models\Conversation;
 use App\Models\User;
@@ -39,11 +40,11 @@ class HandleInertiaRequests extends Middleware
                 'user' => Auth::id() ? new UserResource($request->user()) : null,
             ],
             'conversations' => Auth::id() ? Conversation::getConversationsForSidebar(Auth::user()) : [],
-            'asesors' => Auth::id() ? User::getAsesors(Auth::user()) : [],
             'splitUsers' => Auth::id() ? [
                 'admins' => User::getUsersExceptUser(Auth::user(), 'admin')->map->toConversationArray(),
                 'asesores' => User::getUsersExceptUser(Auth::user(), 'asesor')->map->toConversationArray(),
                 'usuarios' => User::getUsersExceptUser(Auth::user(), 'usuario')->map->toConversationArray(),
+                'grupos' => Group::getGroupsForUser(Auth::user())->map->toConversationArray(),
             ] : [],
         ];
     }
