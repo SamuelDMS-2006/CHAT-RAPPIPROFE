@@ -87,6 +87,7 @@ const ConversationHeader = ({ selectedConversation }) => {
             )
             .then((res) => {
                 emit("toast.show", res.data.message);
+                emit("group.changeStatus", [selectedConversation, status.id]);
             })
             .catch((err) => {
                 console.error(err);
@@ -261,12 +262,8 @@ const ConversationHeader = ({ selectedConversation }) => {
                                                                         }) => (
                                                                             <button
                                                                                 onClick={() =>
-                                                                                    emit(
-                                                                                        "group.changeStatus",
-                                                                                        [
-                                                                                            selectedConversation,
-                                                                                            status.id,
-                                                                                        ]
+                                                                                    changeStatus(
+                                                                                        status.id
                                                                                     )
                                                                                 }
                                                                                 className={`${

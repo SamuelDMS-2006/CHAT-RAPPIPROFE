@@ -11,17 +11,15 @@ import { useEffect } from "react";
 
 const ChatLayout = ({ children, handleStatusChange }) => {
     const page = usePage();
+    const currentUser = page.props.auth.user;
     const conversations = page.props.conversations;
-    const { admins, asesores, usuarios, grupos } = page.props.splitUsers;
     const selectedConversation = page.props.selectedConversation;
+
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
-    const [localGrupos, setLocalGrupos] = useState(grupos);
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
-    const [newState, setNewState] = useState(false);
     const { emit, on } = useEventBus();
-    const currentUser = page.props.auth.user;
     const [searchTerm, setSearchTerm] = useState("");
     const [showNewUserModal, setShowNewUserModal] = useState(false);
 
@@ -34,10 +32,6 @@ const ChatLayout = ({ children, handleStatusChange }) => {
         list.filter((c) => c.name.toLowerCase().includes(searchTerm));
 
     const isUserOnline = (userId) => onlineUsers[userId];
-
-    useEffect(() => {
-        setLocalGrupos(grupos);
-    }, [grupos]);
 
     const messageCreated = (message) => {
         setLocalConversations((oldUsers) => {
@@ -75,50 +69,26 @@ const ChatLayout = ({ children, handleStatusChange }) => {
         messageCreated(prevMessage);
     };
 
-    const changeConversationStatus = (conversation, statusId) => {
-        if (conversation.is_group) {
-            axios
-                .post(route("group.changeStatus", [conversation.id, statusId]))
-                .then((res) => {
-                    setLocalGrupos((prevGrupos) =>
-                        prevGrupos.map((grupo) => {
-                            if (grupo.id === conversation.id) {
-                                return {
-                                    ...grupo,
-                                    code_status: statusId,
-                                };
-                            }
-                            return grupo;
-                        })
-                    );
-                    emit(
-                        "toast.show",
-                        res.data.message || "Estado del grupo actualizado"
-                    );
-                })
-                .catch((err) => {
-                    console.error(
-                        "Error al actualizar el estado del grupo:",
-                        err
-                    );
-                    emit(
-                        "toast.show",
-                        "Error: No se pudo actualizar el estado"
-                    );
-                });
-        }
+    const changeConversationStatus = (group) => {
+        setLocalConversations((prevGrupos) =>
+            prevGrupos.map((grupo) => {
+                if (grupo.id === group.id) {
+                    return {
+                        ...grupo,
+                        code_status: group.code_status,
+                    };
+                }
+                return grupo;
+            })
+        );
     };
 
     useEffect(() => {
         const offCreated = on("message.created", messageCreated);
         const offDeleted = on("message.deleted", messageDeleted);
-        const offChangeStatus = on(
-            "group.changeStatus",
-            ([conversation, statusId]) => {
-                changeConversationStatus(conversation, statusId);
-            }
-        );
-
+        const offChangeStatus = on("group.statusChanged", (group) => {
+            changeConversationStatus(group);
+        });
         const offModalShow = on("GroupModal.show", (group) => {
             setShowGroupModal(true);
         });
@@ -251,32 +221,15 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                         </div>
                         <div className="flex-1 overflow-auto">
                             <div className="p-3">
-                                Admins
-                                {filterBySearch(admins).map((conversation) => (
-                                    <ConversationItem
-                                        key={`${
-                                            conversation.is_group
-                                                ? "group_"
-                                                : "user_"
-                                        }${conversation.id}`}
-                                        conversation={conversation}
-                                        online={!!isUserOnline(conversation.id)}
-                                        selectedConversation={
-                                            selectedConversation
-                                        }
-                                    />
-                                ))}
-                            </div>
-                            <div className="p-3">
-                                Grupos
-                                {filterBySearch(localGrupos).map(
-                                    (conversation) => (
-                                        <ConversationItem
-                                            key={`${
+                                {sortedConversations &&
+                                    filterBySearch(
+                                        sortedConversations.filter(
+                                            (conversation) =>
                                                 conversation.is_group
-                                                    ? "group_"
-                                                    : "user_"
-                                            }${conversation.id}`}
+                                        )
+                                    ).map((conversation) => (
+                                        <ConversationItem
+                                            key={`group_${conversation.id}`}
                                             conversation={conversation}
                                             online={
                                                 !!isUserOnline(conversation.id)
@@ -285,20 +238,41 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                                                 selectedConversation
                                             }
                                         />
-                                    )
-                                )}
+                                    ))}
+                            </div>
+                            <div className="p-3">
+                                Admins
+                                {sortedConversations &&
+                                    filterBySearch(
+                                        sortedConversations.filter(
+                                            (conversation) =>
+                                                conversation.is_admin
+                                        )
+                                    ).map((conversation) => (
+                                        <ConversationItem
+                                            key={`admin_${conversation.id}`}
+                                            conversation={conversation}
+                                            online={
+                                                !!isUserOnline(conversation.id)
+                                            }
+                                            selectedConversation={
+                                                selectedConversation
+                                            }
+                                        />
+                                    ))}
                             </div>
 
                             <div className="p-3">
                                 Asesors
-                                {filterBySearch(asesores).map(
-                                    (conversation) => (
+                                {sortedConversations &&
+                                    filterBySearch(
+                                        sortedConversations.filter(
+                                            (conversation) =>
+                                                conversation.is_asesor
+                                        )
+                                    ).map((conversation) => (
                                         <ConversationItem
-                                            key={`${
-                                                conversation.is_group
-                                                    ? "group_"
-                                                    : "user_"
-                                            }${conversation.id}`}
+                                            key={`asesor_${conversation.id}`}
                                             conversation={conversation}
                                             online={
                                                 !!isUserOnline(conversation.id)
@@ -307,19 +281,22 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                                                 selectedConversation
                                             }
                                         />
-                                    )
-                                )}
+                                    ))}
                             </div>
+
                             <div className="p-3">
-                                Users
-                                {filterBySearch(usuarios).map(
-                                    (conversation) => (
+                                users
+                                {sortedConversations &&
+                                    filterBySearch(
+                                        sortedConversations.filter(
+                                            (conversation) =>
+                                                !conversation.is_group &&
+                                                !conversation.is_admin &&
+                                                !conversation.is_asesor
+                                        )
+                                    ).map((conversation) => (
                                         <ConversationItem
-                                            key={`${
-                                                conversation.is_group
-                                                    ? "group_"
-                                                    : "user_"
-                                            }${conversation.id}`}
+                                            key={`user_${conversation.id}`}
                                             conversation={conversation}
                                             online={
                                                 !!isUserOnline(conversation.id)
@@ -328,8 +305,7 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                                                 selectedConversation
                                             }
                                         />
-                                    )
-                                )}
+                                    ))}
                             </div>
                         </div>
                     </div>

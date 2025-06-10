@@ -38,15 +38,12 @@ export default function Authenticated({ header, children }) {
                     console.error(error);
                 })
                 .listen("SocketMessage", (e) => {
-                    console.log("SocketMessage", e);
                     const message = e.message;
-                    // If the conversation with the sender is not selected
-                    // then show a notification
 
                     emit("message.created", message);
-                    if (message.sender_id === user.id) {
-                        return;
-                    }
+
+                    if (message.sender_id === user.id) return;
+
                     emit("newMessageNotification", {
                         user: message.sender,
                         group_id: message.group_id,
@@ -59,6 +56,14 @@ export default function Authenticated({ header, children }) {
                                       " attachments"
                             }`,
                     });
+                });
+
+            Echo.private(channel)
+                .error((error) => {
+                    console.error(error);
+                })
+                .listen("SocketGroups", (e) => {
+                    emit("group.statusChanged", e.group);
                 });
 
             if (conversation.is_group) {

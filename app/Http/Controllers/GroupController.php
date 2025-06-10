@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\DeleteGroupJob;
+use App\Events\SocketGroups;
 use App\Models\Group;
 use App\Http\Requests\StoreGroupRequest;
+use App\Events\GroupStatusChanged;
 use App\Http\Requests\UpdateGroupRequest;
 
 class GroupController extends Controller
@@ -35,9 +37,8 @@ class GroupController extends Controller
     public function changeStatus(Group $group, $code_status)
     {
         $group->update(['code_status' => (int) $code_status]);
-        $message = "Estado asignado correctamente.";
-
-        return response()->json(['message' => $message]);
+        broadcast(new SocketGroups($group->refresh()))->toOthers();
+        return response()->json(['message' => 'Estado asignado correctamente.']);
     }
 
 
