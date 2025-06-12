@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Group;
 use App\Jobs\DeleteGroupJob;
 use App\Events\SocketGroups;
-use App\Models\Group;
-use App\Http\Requests\StoreGroupRequest;
+use Illuminate\Support\Facades\DB;
 use App\Events\GroupStatusChanged;
+use App\Http\Requests\StoreGroupRequest;
 use App\Http\Requests\UpdateGroupRequest;
 
 class GroupController extends Controller
@@ -28,24 +29,33 @@ class GroupController extends Controller
 
     public function asignAsesor(Group $group, $asesorId)
     {
-        $oldAsesorId = request()->input('old_asesor');
-        $group->load('users');
+        try {
+            DB::beginTransaction();
+            $oldAsesorId = $group->asesor;
 
-        if ($oldAsesorId && $group->users->contains($oldAsesorId)) {
-            $group->users()->detach($oldAsesorId);
+            if ($oldAsesorId && $oldAsesorId != $asesorId) {
+                $group->users()->detach($oldAsesorId);
+            }
+
+
+            $group->users()->syncWithoutDetaching([$asesorId]);
+
+            $group->update(['asesor' => (int) $asesorId]);
+
+            DB::commit();
+
+            $group->refresh();
+
+            broadcast(new SocketGroups($group, 'asesor_changed'))->toOthers();
+
+            $message = "Asesor asignado correctamente.";
+            return response()->json(['message' => $message]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+
+            return response()->json(['message' => 'Ocurrió un error al asignar el asesor.'], 500);
         }
-
-        $group->load('users');
-
-        if (!$group->users->contains($asesorId)) {
-            $group->users()->attach($asesorId);
-        }
-
-        $group->update(['asesor' => (int) $asesorId]);
-
-        broadcast(new SocketGroups($group->refresh(), 'asesor_changed'))->toOthers();
-        $message = "Asesor asignado correctamente.";
-        return response()->json(['message' => $message]);
     }
 
 

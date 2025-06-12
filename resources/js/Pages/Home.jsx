@@ -11,6 +11,7 @@ import AttachmentPreviewModal from "@/Components/App/AttachmentPreviewModal";
 
 function Home({ selectedConversation = null, messages = null }) {
     const [localMessages, setLocalMessages] = useState([]);
+    const [conversation, setConversation] = useState([]);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const [scrollFromBottom, setScrollFromBottom] = useState(0);
     const loadMoreIntersect = useRef(null);
@@ -19,6 +20,13 @@ function Home({ selectedConversation = null, messages = null }) {
     const [previewAttachment, setPreviewAttachment] = useState({});
     const { on } = useEventBus();
     const currentUser = usePage().props.auth.user;
+    const userIsInConversation = conversation?.users?.some(
+        (user) => user.id === currentUser.id
+    );
+
+    useEffect(() => {
+        setConversation(selectedConversation);
+    }, [selectedConversation]);
 
     const messageCreated = (message) => {
         if (
@@ -96,6 +104,16 @@ function Home({ selectedConversation = null, messages = null }) {
         setShowAttachmentPreview(true);
     };
 
+    const changeAsesor = (group) => {
+        setConversation((prev) => {
+            return {
+                ...prev,
+                users: group.users,
+                asesor: group.asesor,
+            };
+        });
+    };
+
     useEffect(() => {
         setTimeout(() => {
             if (messagesCtrRef.current) {
@@ -106,6 +124,9 @@ function Home({ selectedConversation = null, messages = null }) {
 
         const offCreated = on("message.created", messageCreated);
         const offDeleted = on("message.deleted", messageDeleted);
+        const offChangeAsesor = on("group.asesorChanged", (group) => {
+            changeAsesor(group);
+        });
 
         setScrollFromBottom(0);
 
@@ -114,6 +135,7 @@ function Home({ selectedConversation = null, messages = null }) {
         return () => {
             offCreated();
             offDeleted();
+            offChangeAsesor();
         };
     }, [selectedConversation]);
 
@@ -175,10 +197,7 @@ function Home({ selectedConversation = null, messages = null }) {
                 )
             ) : (
                 <>
-                    {selectedConversation.users?.some(
-                        (user) => user.id === currentUser.id,
-                        currentUser.is_admin || currentUser.is_asesor
-                    ) ? (
+                    {userIsInConversation ? (
                         <ConversationHeader
                             selectedConversation={selectedConversation}
                             onGroup={true}
@@ -190,9 +209,7 @@ function Home({ selectedConversation = null, messages = null }) {
                         />
                     )}
 
-                    {selectedConversation.users?.some(
-                        (user) => user.id === currentUser.id
-                    ) ? (
+                    {userIsInConversation ? (
                         <div
                             ref={messagesCtrRef}
                             className="flex-1 overflow-y-auto p-5"
@@ -224,10 +241,8 @@ function Home({ selectedConversation = null, messages = null }) {
                         </div>
                     )}
 
-                    {selectedConversation.users?.some(
-                        (user) => user.id === currentUser.id
-                    ) ? (
-                        <MessageInput conversation={selectedConversation} />
+                    {userIsInConversation ? (
+                        <MessageInput conversation={conversation} />
                     ) : (
                         <div></div>
                     )}

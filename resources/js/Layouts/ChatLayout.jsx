@@ -92,7 +92,6 @@ const ChatLayout = ({ children }) => {
         const offModalShow = on("GroupModal.show", (group) => {
             setShowGroupModal(true);
         });
-
         const offGroupDelete = on("group.deleted", ({ id, name }) => {
             setLocalConversations((oldConversations) => {
                 return oldConversations.filter((con) => con.id != id);
