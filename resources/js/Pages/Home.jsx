@@ -19,6 +19,7 @@ function Home({ selectedConversation = null, messages = null }) {
     const [previewAttachment, setPreviewAttachment] = useState({});
     const { on } = useEventBus();
     const currentUser = usePage().props.auth.user;
+
     const messageCreated = (message) => {
         if (
             selectedConversation &&
@@ -155,7 +156,7 @@ function Home({ selectedConversation = null, messages = null }) {
 
     useEffect(() => {
         if (!messages && !(currentUser.is_admin || currentUser.is_asesor)) {
-            window.location.href = `/group/2`;
+            window.location.href = `/group/${currentUser.group_asigned}`;
         }
     }, [messages, currentUser]);
 
@@ -174,35 +175,62 @@ function Home({ selectedConversation = null, messages = null }) {
                 )
             ) : (
                 <>
-                    {(currentUser.is_admin || currentUser.is_asesor) && (
+                    {selectedConversation.users?.some(
+                        (user) => user.id === currentUser.id,
+                        currentUser.is_admin || currentUser.is_asesor
+                    ) ? (
                         <ConversationHeader
                             selectedConversation={selectedConversation}
+                            onGroup={true}
+                        />
+                    ) : (
+                        <ConversationHeader
+                            selectedConversation={selectedConversation}
+                            onGroup={false}
                         />
                     )}
-                    <div
-                        ref={messagesCtrRef}
-                        className="flex-1 overflow-y-auto p-5"
-                    >
-                        {localMessages.length === 0 ? (
-                            <div className="flex justify-center items-center h-full">
-                                <div className="text-lg text-slate-200">
-                                    No messages found
+
+                    {selectedConversation.users?.some(
+                        (user) => user.id === currentUser.id
+                    ) ? (
+                        <div
+                            ref={messagesCtrRef}
+                            className="flex-1 overflow-y-auto p-5"
+                        >
+                            {localMessages.length === 0 ? (
+                                <div className="flex justify-center items-center h-full">
+                                    <div className="text-lg text-slate-200">
+                                        No messages found
+                                    </div>
                                 </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col">
+                                    <div ref={loadMoreIntersect}></div>
+                                    {localMessages.map((message) => (
+                                        <MessageItem
+                                            key={message.id}
+                                            message={message}
+                                            attachmentClick={onAttachmentClick}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex justify-center items-center h-full">
+                            <div className="text-lg text-slate-200">
+                                No perteneces al grupo
                             </div>
-                        ) : (
-                            <div className="flex-1 flex flex-col">
-                                <div ref={loadMoreIntersect}></div>
-                                {localMessages.map((message) => (
-                                    <MessageItem
-                                        key={message.id}
-                                        message={message}
-                                        attachmentClick={onAttachmentClick}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <MessageInput conversation={selectedConversation} />
+                        </div>
+                    )}
+
+                    {selectedConversation.users?.some(
+                        (user) => user.id === currentUser.id
+                    ) ? (
+                        <MessageInput conversation={selectedConversation} />
+                    ) : (
+                        <div></div>
+                    )}
                 </>
             )}
 
@@ -221,10 +249,7 @@ function Home({ selectedConversation = null, messages = null }) {
 Home.layout = (page) => {
     return (
         <AuthenticatedLayout user={page.props.auth.user}>
-            <ChatLayout
-                children={page}
-                handleStatusChange={page.props.handleStatusChange}
-            />
+            <ChatLayout children={page} />
         </AuthenticatedLayout>
     );
 };

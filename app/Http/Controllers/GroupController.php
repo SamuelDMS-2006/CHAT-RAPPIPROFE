@@ -28,16 +28,32 @@ class GroupController extends Controller
 
     public function asignAsesor(Group $group, $asesorId)
     {
-        $group->update(['asesor' => (int) $asesorId]);
-        $message = "Asesor asignado correctamente.";
+        $oldAsesorId = request()->input('old_asesor');
+        $group->load('users');
 
+        if ($oldAsesorId && $group->users->contains($oldAsesorId)) {
+            $group->users()->detach($oldAsesorId);
+        }
+
+        $group->load('users');
+
+        if (!$group->users->contains($asesorId)) {
+            $group->users()->attach($asesorId);
+        }
+
+        $group->update(['asesor' => (int) $asesorId]);
+
+        broadcast(new SocketGroups($group->refresh(), 'asesor_changed'))->toOthers();
+        $message = "Asesor asignado correctamente.";
         return response()->json(['message' => $message]);
     }
+
+
 
     public function changeStatus(Group $group, $code_status)
     {
         $group->update(['code_status' => (int) $code_status]);
-        broadcast(new SocketGroups($group->refresh()))->toOthers();
+        broadcast(new SocketGroups($group->refresh(), 'status_changed'))->toOthers();
         return response()->json(['message' => 'Estado asignado correctamente.']);
     }
 

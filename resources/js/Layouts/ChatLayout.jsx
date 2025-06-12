@@ -9,7 +9,7 @@ import NewUserModal from "@/Components/App/NewUserModal";
 import { useState } from "react";
 import { useEffect } from "react";
 
-const ChatLayout = ({ children, handleStatusChange }) => {
+const ChatLayout = ({ children }) => {
     const page = usePage();
     const currentUser = page.props.auth.user;
     const conversations = page.props.conversations;
@@ -72,7 +72,7 @@ const ChatLayout = ({ children, handleStatusChange }) => {
     const changeConversationStatus = (group) => {
         setLocalConversations((prevGrupos) =>
             prevGrupos.map((grupo) => {
-                if (grupo.id === group.id) {
+                if (grupo.id === group.id && grupo.is_group) {
                     return {
                         ...grupo,
                         code_status: group.code_status,
@@ -268,7 +268,8 @@ const ChatLayout = ({ children, handleStatusChange }) => {
                                     filterBySearch(
                                         sortedConversations.filter(
                                             (conversation) =>
-                                                conversation.is_asesor
+                                                conversation.is_asesor &&
+                                                !conversation.is_admin
                                         )
                                     ).map((conversation) => (
                                         <ConversationItem

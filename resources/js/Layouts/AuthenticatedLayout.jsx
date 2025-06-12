@@ -63,7 +63,13 @@ export default function Authenticated({ header, children }) {
                     console.error(error);
                 })
                 .listen("SocketGroups", (e) => {
-                    emit("group.statusChanged", e.group);
+                    const { group, type } = e;
+
+                    if (type === "status_changed") {
+                        emit("group.statusChanged", e.group);
+                    } else if (type === "asesor_changed") {
+                        emit("group.asesorChanged", group);
+                    }
                 });
 
             if (conversation.is_group) {

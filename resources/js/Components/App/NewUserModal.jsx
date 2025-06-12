@@ -1,4 +1,3 @@
-import TextAreaInput from "@/Components/TextAreaInput";
 import InputError from "@/Components/InputError";
 import InputLabel from "@/Components/InputLabel";
 import Modal from "@/Components/Modal";
@@ -14,7 +13,7 @@ export default function NewUserModal({ show = false, onClose = () => {} }) {
 
     const { data, setData, processing, reset, post, errors } = useForm({
         name: "",
-        email: "samuelmejiasierra2@gmail.com",
+        email: "",
         password: "",
         is_admin: false,
     });
@@ -58,10 +57,25 @@ export default function NewUserModal({ show = false, onClose = () => {} }) {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Telefono" />
+                    <InputLabel htmlFor="email" value="Email" />
+
+                    <TextInput
+                        id="email"
+                        className="mt-1 block w-full"
+                        value={data.email}
+                        onChange={(e) => setData("email", e.target.value)}
+                        required
+                    />
+
+                    <InputError className="mt-2" message={errors.email} />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="password" value="password" />
 
                     <TextInput
                         id="password"
+                        type="password"
                         className="mt-1 block w-full"
                         value={data.password}
                         onChange={(e) => setData("password", e.target.value)}
