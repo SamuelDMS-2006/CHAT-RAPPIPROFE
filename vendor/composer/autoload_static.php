@@ -711,6 +711,7 @@ class ComposerStaticInitd920e4d66af58f90b821c6da0c78da1b
         'App\\Http\\Controllers\\UserController' => __DIR__ . '/../..' . '/app/Http/Controllers/UserController.php',
         'App\\Http\\Middleware\\ActiveUser' => __DIR__ . '/../..' . '/app/Http/Middleware/ActiveUser.php',
         'App\\Http\\Middleware\\AdminUser' => __DIR__ . '/../..' . '/app/Http/Middleware/AdminUser.php',
+        'App\\Http\\Middleware\\AsesorUser' => __DIR__ . '/../..' . '/app/Http/Middleware/AsesorUser.php',
         'App\\Http\\Middleware\\HandleInertiaRequests' => __DIR__ . '/../..' . '/app/Http/Middleware/HandleInertiaRequests.php',
         'App\\Http\\Requests\\Auth\\LoginRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Auth/LoginRequest.php',
         'App\\Http\\Requests\\ProfileUpdateRequest' => __DIR__ . '/../..' . '/app/Http/Requests/ProfileUpdateRequest.php',

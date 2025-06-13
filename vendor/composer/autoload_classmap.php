@@ -26,6 +26,7 @@ return array(
     'App\\Http\\Controllers\\UserController' => $baseDir . '/app/Http/Controllers/UserController.php',
     'App\\Http\\Middleware\\ActiveUser' => $baseDir . '/app/Http/Middleware/ActiveUser.php',
     'App\\Http\\Middleware\\AdminUser' => $baseDir . '/app/Http/Middleware/AdminUser.php',
+    'App\\Http\\Middleware\\AsesorUser' => $baseDir . '/app/Http/Middleware/AsesorUser.php',
     'App\\Http\\Middleware\\HandleInertiaRequests' => $baseDir . '/app/Http/Middleware/HandleInertiaRequests.php',
     'App\\Http\\Requests\\Auth\\LoginRequest' => $baseDir . '/app/Http/Requests/Auth/LoginRequest.php',
     'App\\Http\\Requests\\ProfileUpdateRequest' => $baseDir . '/app/Http/Requests/ProfileUpdateRequest.php',
