@@ -208,8 +208,41 @@ function Home({ selectedConversation = null, messages = null }) {
                             onGroup={false}
                         />
                     )}
-
-                    {userIsInConversation ? (
+                    {selectedConversation.is_group ? (
+                        userIsInConversation ? (
+                            <div
+                                ref={messagesCtrRef}
+                                className="flex-1 overflow-y-auto p-5"
+                            >
+                                {localMessages.length === 0 ? (
+                                    <div className="flex justify-center items-center h-full">
+                                        <div className="text-lg text-slate-200">
+                                            No messages found
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 flex flex-col">
+                                        <div ref={loadMoreIntersect}></div>
+                                        {localMessages.map((message) => (
+                                            <MessageItem
+                                                key={message.id}
+                                                message={message}
+                                                attachmentClick={
+                                                    onAttachmentClick
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex justify-center items-center h-full">
+                                <div className="text-lg text-slate-200">
+                                    No perteneces al grupo
+                                </div>
+                            </div>
+                        )
+                    ) : (
                         <div
                             ref={messagesCtrRef}
                             className="flex-1 overflow-y-auto p-5"
@@ -233,18 +266,16 @@ function Home({ selectedConversation = null, messages = null }) {
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="flex justify-center items-center h-full">
-                            <div className="text-lg text-slate-200">
-                                No perteneces al grupo
-                            </div>
-                        </div>
                     )}
 
-                    {userIsInConversation ? (
-                        <MessageInput conversation={conversation} />
+                    {selectedConversation.is_group ? (
+                        userIsInConversation ? (
+                            <MessageInput conversation={conversation} />
+                        ) : (
+                            <div></div>
+                        )
                     ) : (
-                        <div></div>
+                        <MessageInput conversation={conversation} />
                     )}
                 </>
             )}

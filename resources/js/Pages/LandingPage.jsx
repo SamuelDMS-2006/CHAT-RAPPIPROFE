@@ -40,7 +40,6 @@ export default function LandingPage() {
             }
 
             const data = await response.json();
-
             // Redirige al chat del grupo recién creado
             router.visit(route("chat.group", data.group_id));
         } catch (err) {
@@ -60,9 +59,7 @@ export default function LandingPage() {
                 onSubmit={handleSubmit}
             >
                 <div className="mb-4">
-                    <label className="block mb-1 font-semibold">
-                        Teléfono
-                    </label>
+                    <label className="block mb-1 font-semibold">Teléfono</label>
                     <input
                         type="text"
                         name="telefono"
@@ -73,9 +70,7 @@ export default function LandingPage() {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block mb-1 font-semibold">
-                        Nombre
-                    </label>
+                    <label className="block mb-1 font-semibold">Nombre</label>
                     <input
                         type="text"
                         name="nombre"
@@ -86,9 +81,7 @@ export default function LandingPage() {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block mb-1 font-semibold">
-                        Email
-                    </label>
+                    <label className="block mb-1 font-semibold">Email</label>
                     <input
                         type="email"
                         name="email"
@@ -98,9 +91,7 @@ export default function LandingPage() {
                         required
                     />
                 </div>
-                {error && (
-                    <div className="mb-4 text-red-500">{error}</div>
-                )}
+                {error && <div className="mb-4 text-red-500">{error}</div>}
                 <button
                     type="submit"
                     className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"

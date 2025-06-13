@@ -28,7 +28,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('/group', [GroupController::class, 'store'])->name('group.store');
     Route::put('/group/{group}', [GroupController::class, 'update'])->name('group.update');
     Route::delete('/group/{group}', [GroupController::class, 'destroy'])->name('group.destroy');
-    
+
     Route::get('/quick-replies', function (\Illuminate\Http\Request $request) {
         $role = $request->query('role', 'asesor');
         $replies = QuickReplies::getReplies($role);
