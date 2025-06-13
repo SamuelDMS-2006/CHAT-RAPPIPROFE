@@ -197,16 +197,20 @@ function Home({ selectedConversation = null, messages = null }) {
                 )
             ) : (
                 <>
-                    {userIsInConversation ? (
-                        <ConversationHeader
-                            selectedConversation={selectedConversation}
-                            onGroup={true}
-                        />
+                    {currentUser.is_admin || currentUser.is_asesor ? (
+                        userIsInConversation ? (
+                            <ConversationHeader
+                                selectedConversation={selectedConversation}
+                                onGroup={true}
+                            />
+                        ) : (
+                            <ConversationHeader
+                                selectedConversation={selectedConversation}
+                                onGroup={false}
+                            />
+                        )
                     ) : (
-                        <ConversationHeader
-                            selectedConversation={selectedConversation}
-                            onGroup={false}
-                        />
+                        <div></div>
                     )}
                     {selectedConversation.is_group ? (
                         userIsInConversation ? (

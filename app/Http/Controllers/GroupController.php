@@ -111,36 +111,45 @@ class GroupController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
         ]);
 
-        // Crear usuario cliente
-        $user = User::create([
-            'name' => $request->nombre,
-            'email' => $request->email,
-            'phone' => $request->telefono,
-            'password' => Hash::make(Str::random(12)),
-        ]);
+        try {
+            $group = DB::transaction(function () use ($request) {
+                $asesor = User::where('is_asesor', true)
+                    ->inRandomOrder()
+                    ->first();
 
-        // Buscar asesor aleatorio
-        $asesor = User::where('is_asesor', true)
-            ->inRandomOrder()
-            ->first();
+                if (!$asesor) {
+                    throw new \Exception('No hay asesores disponibles para asignar.');
+                }
 
-        if (!$asesor) {
-            return response()->json(['message' => 'No hay asesores disponibles'], 422);
+                $admin = User::where('is_admin', true)->first();
+                if (!$admin) {
+                    throw new \Exception('No se encontró un usuario administrador para asignar.');
+                }
+
+                $group = Group::create([
+                    'name' => $request->telefono . ' - ' . $request->nombre,
+                    'owner_id' => $asesor->id,
+                    'asesor' => $asesor->id,
+                ]);
+
+                $user = User::create([
+                    'name' => $request->nombre,
+                    'email' => $request->email,
+                    'group_asigned' => $group->id,
+                    'password' => Hash::make($request->telefono),
+                ]);
+
+                $usersToAttach = array_unique([$user->id, $asesor->id, $admin->id]);
+                $group->users()->attach($usersToAttach);
+
+                auth()->login($user);
+
+                return $group;
+            });
+
+            return response()->json(['group_id' => $group->id]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        // Crear grupo
-        $group = Group::create([
-            'name' => $request->telefono . ' - ' . $request->nombre,
-            'owner_id' => $asesor->id,
-            'asesor' => $asesor->id,
-        ]);
-
-        // Relacionar usuarios al grupo
-        $group->users()->attach([$user->id, $asesor->id]);
-
-        // Login automático del cliente
-        auth()->login($user);
-
-        return response()->json(['group_id' => $group->id]);
     }
 }
