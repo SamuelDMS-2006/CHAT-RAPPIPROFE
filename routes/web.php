@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ChatUserController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
@@ -14,7 +13,7 @@ Route::get('/landing', function () {
     return Inertia::render('LandingPage');
 });
 
-Route::post('/chat-users', [ChatUserController::class, 'store']);
+Route::post('/groups/create-for-client', [GroupController::class, 'createForClient'])->name('groups.createForClient');
 
 Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');

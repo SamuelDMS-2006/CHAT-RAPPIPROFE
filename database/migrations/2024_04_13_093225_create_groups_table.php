@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->longText('description')->nullable();
-            $table->boolean('asesor')->default(1);
+            $table->unsignedBigInteger('asesor')->default(1);
             $table->boolean('code_status')->default(1);
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
