@@ -25,6 +25,8 @@ class MessageResource extends JsonResource
             'sender' => new UserResource($this->sender),
             'group_id' => $this->group_id,
             'attachments' => MessageAttachmentResource::collection($this->attachments),
+            'reply_to' => new MessageResource($this->whenLoaded('replyTo')),
+            'reactions' => MessageReactionResource::collection($this->whenLoaded('reactions')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

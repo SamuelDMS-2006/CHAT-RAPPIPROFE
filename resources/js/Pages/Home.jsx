@@ -8,6 +8,9 @@ import MessageItem from "@/Components/App/MessageItem";
 import MessageInput from "@/Components/App/MessageInput";
 import { useEventBus } from "@/EventBus";
 import AttachmentPreviewModal from "@/Components/App/AttachmentPreviewModal";
+import { Head } from "@inertiajs/react";
+import axios from "axios";
+import Echo from "laravel-echo";
 
 function Home({ selectedConversation = null, messages = null }) {
     const [localMessages, setLocalMessages] = useState([]);
@@ -23,6 +26,7 @@ function Home({ selectedConversation = null, messages = null }) {
     const userIsInConversation = conversation?.users?.some(
         (user) => user.id === currentUser.id
     );
+    const [replyTo, setReplyTo] = useState(null);
 
     useEffect(() => {
         setConversation(selectedConversation);
@@ -182,6 +186,90 @@ function Home({ selectedConversation = null, messages = null }) {
         }
     }, [messages, currentUser]);
 
+    useEffect(() => {
+        const offReply = on("message.reply", ({ message }) => setReplyTo(message));
+        return () => offReply();
+    }, [on]);
+
+    const handleReact = async (messageId, emoji) => {
+        setLocalMessages((prev) =>
+            prev.map((msg) =>
+                msg.id === messageId
+                    ? { ...msg, reacting: true }
+                    : msg
+            )
+        );
+        try {
+            if (emoji === null) {
+                await axios.delete(`/messages/${messageId}/react`);
+                setLocalMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === messageId
+                            ? {
+                                ...msg,
+                                reactions: (msg.reactions || []).filter(r => r.user_id !== currentUser.id),
+                                reacting: false
+                            }
+                            : msg
+                    )
+                );
+            } else {
+                const res = await axios.post(`/messages/${messageId}/react`, { reaction: emoji });
+                setLocalMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === messageId
+                            ? {
+                                ...msg,
+                                reactions: [
+                                    ...(msg.reactions || []).filter(r => r.user_id !== currentUser.id),
+                                    res.data.reaction
+                                ],
+                                reacting: false
+                            }
+                            : msg
+                    )
+                );
+            }
+        } catch {
+            setLocalMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId
+                        ? { ...msg, reacting: false }
+                        : msg
+                )
+            );
+        }
+    };
+
+    useEffect(() => {
+    if (!window.Echo || !localMessages.length) return;
+
+        // Suscríbete a todos los mensajes visibles
+        const channels = localMessages.map(msg =>
+            window.Echo.private(`chat.message.${msg.id}`)
+                .listen('MessageReacted', (e) => {
+                    setLocalMessages(prev =>
+                        prev.map(m => {
+                            if (m.id !== e.reaction.message_id) return m;
+                            let newReactions = (m.reactions || []).filter(r => r.user_id !== e.reaction.user.id);
+                            if (e.reaction.action === "add") {
+                                newReactions.push({
+                                    id: e.reaction.id,
+                                    user_id: e.reaction.user.id,
+                                    reaction: e.reaction.emoji,
+                                });
+                            }
+                            return { ...m, reactions: newReactions };
+                        })
+                    );
+                })
+        );
+
+        return () => {
+            channels.forEach(channel => channel.stopListening('MessageReacted'));
+        };
+    }, [localMessages]);
+
     return (
         <>
             {!messages ? (
@@ -214,31 +302,40 @@ function Home({ selectedConversation = null, messages = null }) {
                     )}
                     {selectedConversation.is_group ? (
                         userIsInConversation ? (
-                            <div
-                                ref={messagesCtrRef}
-                                className="flex-1 overflow-y-auto p-5"
-                            >
-                                {localMessages.length === 0 ? (
-                                    <div className="flex justify-center items-center h-full">
-                                        <div className="text-lg text-slate-200">
-                                            No messages found
+                            <>
+                                <div
+                                    ref={messagesCtrRef}
+                                    className="flex-1 overflow-y-auto p-5"
+                                >
+                                    {localMessages.length === 0 ? (
+                                        <div className="flex justify-center items-center h-full">
+                                            <div className="text-lg text-slate-200">
+                                                No messages found
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex-1 flex flex-col">
-                                        <div ref={loadMoreIntersect}></div>
-                                        {localMessages.map((message) => (
-                                            <MessageItem
-                                                key={message.id}
-                                                message={message}
-                                                attachmentClick={
-                                                    onAttachmentClick
-                                                }
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                    ) : (
+                                        <div className="flex-1 flex flex-col">
+                                            <div ref={loadMoreIntersect}></div>
+                                            {localMessages.map((message) => (
+                                                <MessageItem
+                                                    key={message.id}
+                                                    message={message}
+                                                    attachmentClick={
+                                                        onAttachmentClick
+                                                    }
+                                                    onReply={setReplyTo}
+                                                    onReact={handleReact}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <MessageInput 
+                                    conversation={selectedConversation}
+                                    replyTo={replyTo}
+                                    onCancelReply={() => setReplyTo(null)}
+                                />
+                            </>
                         ) : (
                             <div className="flex justify-center items-center h-full">
                                 <div className="text-lg text-slate-200">
@@ -265,6 +362,7 @@ function Home({ selectedConversation = null, messages = null }) {
                                             key={message.id}
                                             message={message}
                                             attachmentClick={onAttachmentClick}
+                                            onReact={handleReact}
                                         />
                                     ))}
                                 </div>
@@ -274,12 +372,12 @@ function Home({ selectedConversation = null, messages = null }) {
 
                     {selectedConversation.is_group ? (
                         userIsInConversation ? (
-                            <MessageInput conversation={conversation} />
+                            <MessageInput conversation={conversation} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
                         ) : (
                             <div></div>
                         )
                     ) : (
-                        <MessageInput conversation={conversation} />
+                        <MessageInput conversation={conversation} replyTo={replyTo} onCancelReply={() => setReplyTo(null)}/>
                     )}
                 </>
             )}
@@ -299,6 +397,7 @@ function Home({ selectedConversation = null, messages = null }) {
 Home.layout = (page) => {
     return (
         <AuthenticatedLayout user={page.props.auth.user}>
+            <Head title="Inicio" />
             <ChatLayout children={page} />
         </AuthenticatedLayout>
     );

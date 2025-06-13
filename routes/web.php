@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MessageReactionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Helpers\QuickReplies;
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('/group', [GroupController::class, 'store'])->name('group.store');
     Route::put('/group/{group}', [GroupController::class, 'update'])->name('group.update');
     Route::delete('/group/{group}', [GroupController::class, 'destroy'])->name('group.destroy');
+
+    Route::post('/messages/{message}/react', [MessageReactionController::class, 'react']);
+    Route::delete('/messages/{message}/react', [MessageReactionController::class, 'remove']);
 
     Route::get('/quick-replies', function (\Illuminate\Http\Request $request) {
         $role = $request->query('role', 'asesor');
