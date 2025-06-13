@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\SocketMessage;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
+use App\Events\NewMessageInGroup;
 use App\Models\Conversation;
 use App\Models\Group;
 use App\Models\Message;
@@ -123,7 +124,6 @@ class MessageController extends Controller
         }
 
         SocketMessage::dispatch($message);
-
         return new MessageResource($message);
     }
 

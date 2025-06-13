@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ChatUserController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
@@ -8,12 +7,13 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Helpers\QuickReplies;
 
 Route::get('/landing', function () {
     return Inertia::render('LandingPage');
 });
 
-Route::post('/chat-users', [ChatUserController::class, 'store']);
+Route::post('/groups/create-for-client', [GroupController::class, 'createForClient'])->name('groups.createForClient');
 
 Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');
@@ -28,6 +28,16 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('/group', [GroupController::class, 'store'])->name('group.store');
     Route::put('/group/{group}', [GroupController::class, 'update'])->name('group.update');
     Route::delete('/group/{group}', [GroupController::class, 'destroy'])->name('group.destroy');
+    
+    Route::get('/quick-replies', function (\Illuminate\Http\Request $request) {
+        $role = $request->query('role', 'asesor');
+        $replies = QuickReplies::getReplies($role);
+        $result = [];
+        foreach ($replies as $label => $value) {
+            $result[] = ['label' => $label, 'value' => $value];
+        }
+        return response()->json($result);
+    });
 
     Route::middleware(['asesor'])->group(function () {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

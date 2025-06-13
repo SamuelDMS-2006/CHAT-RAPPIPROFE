@@ -19,3 +19,7 @@ Broadcast::channel('message.group.{groupId}', function (User $user, int $groupId
 Broadcast::channel('group.deleted.{groupId}', function (User $user, int $groupId) {
     return $user->groups->contains('id', $groupId);
 });
+
+Broadcast::channel('group.statusChange.{groupId}', function (User $user, int $groupId) {
+    return $user->groups->contains('id', $groupId);
+});

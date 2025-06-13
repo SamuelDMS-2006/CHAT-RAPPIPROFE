@@ -13,13 +13,15 @@ import GroupDescriptionPopover from "./GroupDescriptionPopover";
 import GroupUsersPopover from "./GroupUsersPopover";
 import { useEventBus } from "@/EventBus";
 import { useState, useEffect } from "react";
+import { use } from "react";
 
-const ConversationHeader = ({ selectedConversation }) => {
+const ConversationHeader = ({ selectedConversation, onGroup }) => {
     const page = usePage();
     const currentUser = page.props.auth.user;
     const { asesores } = page.props.splitUsers;
-    const { emit } = useEventBus();
+    const { emit, on } = useEventBus();
     const [sortedAsesors, setSortedAsesors] = useState([]);
+    const [localConversations, setLocalConversations] = useState([]);
 
     const status = [
         {
@@ -67,7 +69,10 @@ const ConversationHeader = ({ selectedConversation }) => {
     const asignAsesor = (asesorId) => {
         axios
             .post(
-                route("group.asignAsesor", [selectedConversation.id, asesorId])
+                route("group.asignAsesor", [selectedConversation.id, asesorId]),
+                {
+                    old_asesor: selectedConversation.asesor,
+                }
             )
             .then((res) => {
                 emit("toast.show", res.data.message);
@@ -87,12 +92,37 @@ const ConversationHeader = ({ selectedConversation }) => {
             )
             .then((res) => {
                 emit("toast.show", res.data.message);
+                emit("group.changeStatus", [selectedConversation, status.id]);
             })
             .catch((err) => {
                 console.error(err);
                 emit("toast.show", "Error al actualizar el estado");
             });
     };
+
+    const changeAsesor = (group) => {
+        setLocalConversations((prev) => {
+            return {
+                ...prev,
+                users: group.users,
+                asesor: group.asesor,
+            };
+        });
+    };
+
+    useEffect(() => {
+        setLocalConversations(selectedConversation);
+    }, [selectedConversation]);
+
+    useEffect(() => {
+        const offChangeAsesor = on("group.asesorChanged", (group) => {
+            changeAsesor(group);
+        });
+
+        return () => {
+            offChangeAsesor();
+        };
+    }, [on]);
 
     useEffect(() => {
         if (asesores && asesores.length > 0) {
@@ -127,16 +157,16 @@ const ConversationHeader = ({ selectedConversation }) => {
                             )}
                         </div>
                     </div>
-                    {selectedConversation.is_group && (
+
+                    {onGroup && selectedConversation.is_group ? (
                         <div className="flex gap-3 items-center">
                             <GroupDescriptionPopover
-                                description={selectedConversation.description}
+                                description={localConversations.description}
                             />
                             <GroupUsersPopover
-                                users={selectedConversation.users}
+                                users={localConversations.users}
                             />
-                            {selectedConversation.owner_id ==
-                                currentUser.id && (
+                            {localConversations.owner_id == currentUser.id && (
                                 <>
                                     <div
                                         className="tooltip tooltip-left"
@@ -146,7 +176,7 @@ const ConversationHeader = ({ selectedConversation }) => {
                                             onClick={(ev) =>
                                                 emit(
                                                     "GroupModal.show",
-                                                    selectedConversation
+                                                    localConversations
                                                 )
                                             }
                                             className="text-gray-400 hover:text-gray-200"
@@ -167,9 +197,9 @@ const ConversationHeader = ({ selectedConversation }) => {
                                     </div>
                                 </>
                             )}
-                            {selectedConversation.is_group &&
-                                !selectedConversation.is_admin &&
-                                !selectedConversation.is_asesor &&
+                            {localConversations.is_group &&
+                                !localConversations.is_admin &&
+                                !localConversations.is_asesor &&
                                 currentUser.is_asesor && (
                                     <div className="flex flex-row gap-2 items-start">
                                         <Menu
@@ -261,12 +291,8 @@ const ConversationHeader = ({ selectedConversation }) => {
                                                                         }) => (
                                                                             <button
                                                                                 onClick={() =>
-                                                                                    emit(
-                                                                                        "group.changeStatus",
-                                                                                        [
-                                                                                            selectedConversation,
-                                                                                            status.id,
-                                                                                        ]
+                                                                                    changeStatus(
+                                                                                        status.id
                                                                                     )
                                                                                 }
                                                                                 className={`${
@@ -297,6 +323,8 @@ const ConversationHeader = ({ selectedConversation }) => {
                                     </div>
                                 )}
                         </div>
+                    ) : (
+                        <div></div>
                     )}
                 </div>
             )}

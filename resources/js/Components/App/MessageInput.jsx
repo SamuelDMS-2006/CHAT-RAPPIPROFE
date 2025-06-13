@@ -14,6 +14,7 @@ import { isAudio, isImage } from "@/helpers";
 import AttachmentPreview from "./AttachmentPreview";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
+import { useEventBus } from "@/EventBus";
 
 const MessageInput = ({ conversation = null }) => {
     const [newMessage, setNewMessage] = useState("");
@@ -21,6 +22,7 @@ const MessageInput = ({ conversation = null }) => {
     const [messageSending, setMessageSending] = useState(false);
     const [chosenFiles, setChosenFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const { emit } = useEventBus();
 
     const onFileChange = (ev) => {
         const files = ev.target.files;
@@ -37,6 +39,7 @@ const MessageInput = ({ conversation = null }) => {
             return [...prevFiles, ...updatedFiles];
         });
     };
+
     const onSendClick = () => {
         if (messageSending) {
             return;
@@ -63,19 +66,20 @@ const MessageInput = ({ conversation = null }) => {
         }
 
         setMessageSending(true);
+
         axios
             .post(route("message.store"), formData, {
                 onUploadProgress: (progressEvent) => {
                     const progress = Math.round(
                         (progressEvent.loaded / progressEvent.total) * 100
                     );
-                    console.log(progress);
                     if (chosenFiles.length > 0) {
                         setUploadProgress(progress);
                     }
                 },
             })
             .then((response) => {
+                emit("message.sent", [conversation.id, response.data]);
                 setNewMessage("");
                 setMessageSending(false);
                 setUploadProgress(0);

@@ -11,6 +11,7 @@ import AttachmentPreviewModal from "@/Components/App/AttachmentPreviewModal";
 
 function Home({ selectedConversation = null, messages = null }) {
     const [localMessages, setLocalMessages] = useState([]);
+    const [conversation, setConversation] = useState([]);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const [scrollFromBottom, setScrollFromBottom] = useState(0);
     const loadMoreIntersect = useRef(null);
@@ -19,6 +20,14 @@ function Home({ selectedConversation = null, messages = null }) {
     const [previewAttachment, setPreviewAttachment] = useState({});
     const { on } = useEventBus();
     const currentUser = usePage().props.auth.user;
+    const userIsInConversation = conversation?.users?.some(
+        (user) => user.id === currentUser.id
+    );
+
+    useEffect(() => {
+        setConversation(selectedConversation);
+    }, [selectedConversation]);
+
     const messageCreated = (message) => {
         if (
             selectedConversation &&
@@ -95,6 +104,16 @@ function Home({ selectedConversation = null, messages = null }) {
         setShowAttachmentPreview(true);
     };
 
+    const changeAsesor = (group) => {
+        setConversation((prev) => {
+            return {
+                ...prev,
+                users: group.users,
+                asesor: group.asesor,
+            };
+        });
+    };
+
     useEffect(() => {
         setTimeout(() => {
             if (messagesCtrRef.current) {
@@ -105,6 +124,9 @@ function Home({ selectedConversation = null, messages = null }) {
 
         const offCreated = on("message.created", messageCreated);
         const offDeleted = on("message.deleted", messageDeleted);
+        const offChangeAsesor = on("group.asesorChanged", (group) => {
+            changeAsesor(group);
+        });
 
         setScrollFromBottom(0);
 
@@ -113,6 +135,7 @@ function Home({ selectedConversation = null, messages = null }) {
         return () => {
             offCreated();
             offDeleted();
+            offChangeAsesor();
         };
     }, [selectedConversation]);
 
@@ -155,7 +178,7 @@ function Home({ selectedConversation = null, messages = null }) {
 
     useEffect(() => {
         if (!messages && !(currentUser.is_admin || currentUser.is_asesor)) {
-            window.location.href = `/group/2`;
+            window.location.href = `/group/${currentUser.group_asigned}`;
         }
     }, [messages, currentUser]);
 
@@ -174,35 +197,55 @@ function Home({ selectedConversation = null, messages = null }) {
                 )
             ) : (
                 <>
-                    {(currentUser.is_admin || currentUser.is_asesor) && (
+                    {userIsInConversation ? (
                         <ConversationHeader
                             selectedConversation={selectedConversation}
+                            onGroup={true}
+                        />
+                    ) : (
+                        <ConversationHeader
+                            selectedConversation={selectedConversation}
+                            onGroup={false}
                         />
                     )}
-                    <div
-                        ref={messagesCtrRef}
-                        className="flex-1 overflow-y-auto p-5"
-                    >
-                        {localMessages.length === 0 ? (
-                            <div className="flex justify-center items-center h-full">
-                                <div className="text-lg text-slate-200">
-                                    No messages found
+
+                    {userIsInConversation ? (
+                        <div
+                            ref={messagesCtrRef}
+                            className="flex-1 overflow-y-auto p-5"
+                        >
+                            {localMessages.length === 0 ? (
+                                <div className="flex justify-center items-center h-full">
+                                    <div className="text-lg text-slate-200">
+                                        No messages found
+                                    </div>
                                 </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col">
+                                    <div ref={loadMoreIntersect}></div>
+                                    {localMessages.map((message) => (
+                                        <MessageItem
+                                            key={message.id}
+                                            message={message}
+                                            attachmentClick={onAttachmentClick}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex justify-center items-center h-full">
+                            <div className="text-lg text-slate-200">
+                                No perteneces al grupo
                             </div>
-                        ) : (
-                            <div className="flex-1 flex flex-col">
-                                <div ref={loadMoreIntersect}></div>
-                                {localMessages.map((message) => (
-                                    <MessageItem
-                                        key={message.id}
-                                        message={message}
-                                        attachmentClick={onAttachmentClick}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <MessageInput conversation={selectedConversation} />
+                        </div>
+                    )}
+
+                    {userIsInConversation ? (
+                        <MessageInput conversation={conversation} />
+                    ) : (
+                        <div></div>
+                    )}
                 </>
             )}
 
@@ -221,10 +264,7 @@ function Home({ selectedConversation = null, messages = null }) {
 Home.layout = (page) => {
     return (
         <AuthenticatedLayout user={page.props.auth.user}>
-            <ChatLayout
-                children={page}
-                handleStatusChange={page.props.handleStatusChange}
-            />
+            <ChatLayout children={page} />
         </AuthenticatedLayout>
     );
 };
