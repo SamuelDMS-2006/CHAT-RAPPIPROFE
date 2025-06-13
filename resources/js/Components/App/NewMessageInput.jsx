@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
  * Componente de entrada de mensajes con sugerencias de quick replies.
  * Obtiene los comandos desde el backend (PHP) y muestra sugerencias al escribir "/".
  */
-const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor" }) => {
+const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor", replyTo, onCancelReply }) => {
     const input = useRef();
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
@@ -88,7 +88,9 @@ const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor" }) => {
     return (
         <div className="relative w-full">
             {showSuggestions && (
-                <ul className="absolute left-0 bottom-full mb-1 bg-white border rounded shadow z-10 w-64 max-h-60 overflow-y-auto">
+                <ul className="absolute left-0 bottom-full w-full mb-2 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-auto animate-fade-in"
+                    style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}
+                >
                     {suggestions.map((s, idx) => (
                         <li
                             key={s.label}
@@ -101,6 +103,7 @@ const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor" }) => {
                     ))}
                 </ul>
             )}
+
             <textarea
                 ref={input}
                 value={value}

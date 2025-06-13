@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useState } from "react";
 import {
     PaperClipIcon,
     PhotoIcon,
@@ -16,7 +16,14 @@ import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
 
-const MessageInput = ({ conversation = null }) => {
+/**
+ * Componente para la entrada y envío de mensajes, adjuntos y respuestas (reply).
+ * Props:
+ * - conversation: objeto de la conversación actual (usuario o grupo)
+ * - replyTo: mensaje al que se está respondiendo (opcional)
+ * - onCancelReply: función para cancelar el reply (opcional)
+ */
+const MessageInput = ({ conversation = null, replyTo = null, onCancelReply }) => {
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
@@ -24,34 +31,23 @@ const MessageInput = ({ conversation = null }) => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const { emit } = useEventBus();
 
+    // Maneja la selección de archivos adjuntos
     const onFileChange = (ev) => {
         const files = ev.target.files;
-
-        const updatedFiles = [...files].map((file) => {
-            return {
-                file: file,
-                url: URL.createObjectURL(file),
-            };
-        });
+        const updatedFiles = [...files].map((file) => ({
+            file: file,
+            url: URL.createObjectURL(file),
+        }));
         ev.target.value = null;
-
-        setChosenFiles((prevFiles) => {
-            return [...prevFiles, ...updatedFiles];
-        });
+        setChosenFiles((prevFiles) => [...prevFiles, ...updatedFiles]);
     };
 
+    // Envía el mensaje (texto, adjuntos y reply)
     const onSendClick = () => {
-        if (messageSending) {
-            return;
-        }
+        if (messageSending) return;
         if (newMessage.trim() === "" && chosenFiles.length === 0) {
-            setInputErrorMessage(
-                "Please provide a message or upload attachments."
-            );
-
-            setTimeout(() => {
-                setInputErrorMessage("");
-            }, 3000);
+            setInputErrorMessage("Please provide a message or upload attachments.");
+            setTimeout(() => setInputErrorMessage(""), 3000);
             return;
         }
         const formData = new FormData();
@@ -64,6 +60,10 @@ const MessageInput = ({ conversation = null }) => {
         } else if (conversation.is_group) {
             formData.append("group_id", conversation.id);
         }
+        // Incluye el reply_to_id si se está respondiendo a un mensaje
+        if (replyTo) {
+            formData.append("reply_to_id", replyTo.id);
+        }
 
         setMessageSending(true);
 
@@ -73,9 +73,7 @@ const MessageInput = ({ conversation = null }) => {
                     const progress = Math.round(
                         (progressEvent.loaded / progressEvent.total) * 100
                     );
-                    if (chosenFiles.length > 0) {
-                        setUploadProgress(progress);
-                    }
+                    if (chosenFiles.length > 0) setUploadProgress(progress);
                 },
             })
             .then((response) => {
@@ -84,6 +82,7 @@ const MessageInput = ({ conversation = null }) => {
                 setMessageSending(false);
                 setUploadProgress(0);
                 setChosenFiles([]);
+                if (onCancelReply) onCancelReply();
             })
             .catch((error) => {
                 setMessageSending(false);
@@ -95,28 +94,35 @@ const MessageInput = ({ conversation = null }) => {
             });
     };
 
+    // Envía un "like" rápido
     const onLikeClick = () => {
-        if (messageSending) {
-            return;
-        }
-        const data = {
-            message: "👍",
-        };
+        if (messageSending) return;
+        const data = { message: "👍" };
         if (conversation.is_user) {
             data["receiver_id"] = conversation.id;
         } else if (conversation.is_group) {
             data["group_id"] = conversation.id;
         }
-
         axios.post(route("message.store"), data);
     };
 
+    // Callback para cuando se graba un audio
     const recordedAudioReady = (file, url) => {
         setChosenFiles((prevFiles) => [...prevFiles, { file, url }]);
     };
 
     return (
         <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
+            {replyTo && (
+                <div className="w-full bg-gray-700 text-gray-200 p-2 rounded mb-2 flex justify-between items-center">
+                    <div>
+                        <span className="font-semibold">{replyTo.sender?.name}:</span>{" "}
+                        <span className="italic">{replyTo.message}</span>
+                    </div>
+                    <button onClick={onCancelReply} className="ml-2 text-red-400">Cancelar</button>
+                </div>
+            )}
+            {/* Botones para adjuntar archivos, imágenes y grabar audio */}
             <div className="order-2 flex-1 xs:flex-none xs:order-1 p-2">
                 <button className="p-1 text-gray-400 hover:text-gray-300 relative overflow-hidden">
                     <PaperClipIcon className="w-6" />
@@ -139,9 +145,12 @@ const MessageInput = ({ conversation = null }) => {
                 </button>
                 <AudioRecorder fileReady={recordedAudioReady} />
             </div>
+            {/* Input de mensaje */}
             <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
-                <div className="flex ">
+                <div className="flex">
                     <NewMessageInput
+                        id="chat-message"
+                        name="chat-message"
                         value={newMessage}
                         onSend={onSendClick}
                         onChange={(ev) => setNewMessage(ev.target.value)}
@@ -154,7 +163,8 @@ const MessageInput = ({ conversation = null }) => {
                         <PaperAirplaneIcon className="w-6" />
                         <span className="hidden sm:inline">Send</span>
                     </button>
-                </div>{" "}
+                </div>
+                {/* Barra de progreso de subida de archivos */}
                 {!!uploadProgress && (
                     <progress
                         className="progress progress-info w-full"
@@ -162,9 +172,11 @@ const MessageInput = ({ conversation = null }) => {
                         max="100"
                     ></progress>
                 )}
+                {/* Mensaje de error */}
                 {inputErrorMessage && (
                     <p className="text-xs text-red-400">{inputErrorMessage}</p>
                 )}
+                {/* Previsualización de archivos adjuntos */}
                 <div className="flex flex-wrap gap-1 mt-2">
                     {chosenFiles.map((file) => (
                         <div
@@ -186,18 +198,15 @@ const MessageInput = ({ conversation = null }) => {
                                     file={file}
                                     showVolume={false}
                                 />
-                                // <audio src={file.url} controls></audio>
                             )}
                             {!isAudio(file.file) && !isImage(file.file) && (
                                 <AttachmentPreview file={file} />
                             )}
-
                             <button
                                 onClick={() =>
                                     setChosenFiles(
                                         chosenFiles.filter(
-                                            (f) =>
-                                                f.file.name !== file.file.name
+                                            (f) => f.file.name !== file.file.name
                                         )
                                     )
                                 }
@@ -209,6 +218,7 @@ const MessageInput = ({ conversation = null }) => {
                     ))}
                 </div>
             </div>
+            {/* Botones para emojis y like */}
             <div className="order-3 xs:order-3 p-2 flex">
                 <Popover className="relative">
                     <Popover.Button className="p-1 text-gray-400 hover:text-gray-300">
@@ -220,7 +230,7 @@ const MessageInput = ({ conversation = null }) => {
                             onEmojiClick={(ev) =>
                                 setNewMessage(newMessage + ev.emoji)
                             }
-                        ></EmojiPicker>
+                        />
                     </Popover.Panel>
                 </Popover>
                 <button

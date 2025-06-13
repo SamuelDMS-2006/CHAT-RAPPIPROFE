@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Events\SocketMessage;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
-use App\Events\NewMessageInGroup;
 use App\Models\Conversation;
 use App\Models\Group;
 use App\Models\Message;
@@ -16,21 +15,24 @@ use Illuminate\Support\Facades\Storage;
 
 class MessageController extends Controller
 {
+    /**
+     * Muestra los mensajes entre el usuario autenticado y otro usuario.
+     */
     public function byUser(User $user)
     {
         $authUser = auth()->user();
 
-        if (
-            !$authUser->is_admin &&
-            !$authUser->is_asesor
-        ) {
+        // Redirige si el usuario no es admin ni asesor
+        if (!$authUser->is_admin && !$authUser->is_asesor) {
             return redirect()->route('chat.group', ['group' => $authUser->group_asigned]);
         }
 
-        $messages = Message::where(function ($query) use ($authUser, $user) {
-            $query->where('sender_id', $authUser->id)->where('receiver_id', $user->id)
-                ->orWhere('sender_id', $user->id)->where('receiver_id', $authUser->id);
-        })->latest()->paginate(10);
+        // Obtiene los mensajes entre ambos usuarios
+        $messages = Message::with(['sender', 'attachments', 'replyTo', 'reactions'])
+            ->where(function ($query) use ($authUser, $user) {
+                $query->where('sender_id', $authUser->id)->where('receiver_id', $user->id)
+                    ->orWhere('sender_id', $user->id)->where('receiver_id', $authUser->id);
+            })->latest()->paginate(10);
 
         return inertia('Home', [
             'selectedConversation' => $user->toConversationArray(),
@@ -38,18 +40,22 @@ class MessageController extends Controller
         ]);
     }
 
-
+    /**
+     * Muestra los mensajes de un grupo.
+     */
     public function byGroup(Group $group)
     {
         $authUser = auth()->user();
 
+        // Redirige si el usuario no pertenece al grupo
         if (!$authUser->is_admin && !$authUser->is_asesor) {
             if ($group->id != $authUser->group_asigned) {
                 return redirect()->route('chat.group', ['group' => $authUser->group_asigned]);
             }
         }
 
-        $messages = Message::where('group_id', $group->id)
+        $messages = Message::with(['sender', 'attachments', 'replyTo', 'reactions'])
+            ->where('group_id', $group->id)
             ->latest()
             ->paginate(10);
 
@@ -59,15 +65,20 @@ class MessageController extends Controller
         ]);
     }
 
+    /**
+     * Carga mensajes anteriores a uno dado (paginación infinita).
+     */
     public function loadOlder(Message $message)
     {
         if ($message->group_id) {
-            $messages = Message::where('created_at', '<', $message->created_at)
+            $messages = Message::with(['sender', 'attachments', 'replyTo', 'reactions'])
+                ->where('created_at', '<', $message->created_at)
                 ->where('group_id', $message->group_id)
                 ->latest()
                 ->paginate(10);
         } else {
-            $messages = Message::where('created_at', '<', $message->created_at)
+            $messages = Message::with(['sender', 'attachments', 'replyTo', 'reactions'])
+                ->where('created_at', '<', $message->created_at)
                 ->where(function ($query) use ($message) {
                     $query->where('sender_id', $message->sender_id)
                         ->where('receiver_id', $message->receiver_id)
@@ -82,7 +93,7 @@ class MessageController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Guarda un nuevo mensaje (privado o grupal), con soporte para adjuntos y reply.
      */
     public function store(StoreMessageRequest $request)
     {
@@ -90,11 +101,12 @@ class MessageController extends Controller
         $data['sender_id'] = auth()->id();
         $receiverId = $data['receiver_id'] ?? null;
         $groupId = $data['group_id'] ?? null;
-
         $files = $data['attachments'] ?? [];
 
+        // Crea el mensaje
         $message = Message::create($data);
 
+        // Procesa y guarda los adjuntos si existen
         $attachments = [];
         if ($files) {
             foreach ($files as $file) {
@@ -114,32 +126,35 @@ class MessageController extends Controller
             $message->attachments = $attachments;
         }
 
-
+        // Actualiza la conversación o grupo con el último mensaje
         if ($receiverId) {
             Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
         }
-
         if ($groupId) {
             Group::updateGroupWithMessage($groupId, $message);
         }
 
+        // Dispara el evento para comunicación en tiempo real
         SocketMessage::dispatch($message);
+
+        // Devuelve el mensaje como recurso
         return new MessageResource($message);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Elimina un mensaje si el usuario autenticado es el propietario.
      */
     public function destroy(Message $message)
     {
-        // Check if the user is the owner of the message
+        // Solo el propietario puede eliminar el mensaje
         if ($message->sender_id !== auth()->id()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $group = null;
         $conversation = null;
-        // Check if the message is the group message
+
+        // Verifica si el mensaje es el último del grupo o conversación
         if ($message->group_id) {
             $group = Group::where('last_message_id', $message->id)->first();
         } else {
@@ -150,7 +165,6 @@ class MessageController extends Controller
 
         $lastMessage = null;
         if ($group) {
-            // Repopulate $group with latest database data
             $group = Group::find($group->id);
             $lastMessage = $group->lastMessage;
         } else if ($conversation) {

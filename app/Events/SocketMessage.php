@@ -22,7 +22,7 @@ class SocketMessage implements ShouldBroadcastNow
      */
     public function __construct(public Message $message)
     {
-        //
+        $this->message->load('sender', 'replyTo');
     }
 
     public function broadcastWith(): array
