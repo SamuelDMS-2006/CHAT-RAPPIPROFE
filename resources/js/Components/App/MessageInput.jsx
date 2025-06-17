@@ -23,7 +23,11 @@ import { useEventBus } from "@/EventBus";
  * - replyTo: mensaje al que se está respondiendo (opcional)
  * - onCancelReply: función para cancelar el reply (opcional)
  */
-const MessageInput = ({ conversation = null, replyTo = null, onCancelReply }) => {
+const MessageInput = ({
+    conversation = null,
+    replyTo = null,
+    onCancelReply,
+}) => {
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
@@ -46,7 +50,9 @@ const MessageInput = ({ conversation = null, replyTo = null, onCancelReply }) =>
     const onSendClick = () => {
         if (messageSending) return;
         if (newMessage.trim() === "" && chosenFiles.length === 0) {
-            setInputErrorMessage("Please provide a message or upload attachments.");
+            setInputErrorMessage(
+                "Please provide a message or upload attachments."
+            );
             setTimeout(() => setInputErrorMessage(""), 3000);
             return;
         }
@@ -116,10 +122,17 @@ const MessageInput = ({ conversation = null, replyTo = null, onCancelReply }) =>
             {replyTo && (
                 <div className="w-full bg-gray-700 text-gray-200 p-2 rounded mb-2 flex justify-between items-center">
                     <div>
-                        <span className="font-semibold">{replyTo.sender?.name}:</span>{" "}
+                        <span className="font-semibold">
+                            {replyTo.sender?.name}:
+                        </span>{" "}
                         <span className="italic">{replyTo.message}</span>
                     </div>
-                    <button onClick={onCancelReply} className="ml-2 text-red-400">Cancelar</button>
+                    <button
+                        onClick={onCancelReply}
+                        className="ml-2 text-red-400"
+                    >
+                        Cancelar
+                    </button>
                 </div>
             )}
             {/* Botones para adjuntar archivos, imágenes y grabar audio */}
@@ -206,7 +219,8 @@ const MessageInput = ({ conversation = null, replyTo = null, onCancelReply }) =>
                                 onClick={() =>
                                     setChosenFiles(
                                         chosenFiles.filter(
-                                            (f) => f.file.name !== file.file.name
+                                            (f) =>
+                                                f.file.name !== file.file.name
                                         )
                                     )
                                 }

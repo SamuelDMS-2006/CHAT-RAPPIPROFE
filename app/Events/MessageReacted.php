@@ -23,10 +23,19 @@ class MessageReacted implements ShouldBroadcast
         $this->action = $action;
     }
 
+
     public function broadcastOn()
     {
-        return new PrivateChannel('chat.message.' . $this->reaction->message_id);
+        $message = $this->reaction->message;
+
+        if ($message->group_id) {
+            return [new PrivateChannel('message.group.' . $message->group_id)];
+        } else {
+            $ids = collect([$message->sender_id, $message->receiver_id])->sort()->implode('-');
+            return [new PrivateChannel('message.user.' . $ids)];
+        }
     }
+
 
     public function broadcastWith()
     {

@@ -7,6 +7,7 @@ import { Link, usePage } from "@inertiajs/react";
 import { useEventBus } from "@/EventBus";
 import Toast from "@/Components/App/Toast";
 import NewMessageNotification from "@/Components/App/NewMessageNotification";
+import NewUsersNotification from "@/Components/App/NewUsersNotification";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { UserPlusIcon } from "@heroicons/react/24/solid";
 import UserAvatar from "@/Components/App/UserAvatar";
@@ -20,6 +21,18 @@ export default function Authenticated({ header, children }) {
     const { emit } = useEventBus();
 
     useEffect(() => {
+        Echo.private(`admin.notifications.${user.id}`).listen(
+            "UsersNotifications",
+            (e) => {
+                emit("group.created", {
+                    group: e.group,
+                    message: e.message,
+                });
+            }
+        );
+    }, []);
+
+    useEffect(() => {
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;
 
@@ -31,7 +44,6 @@ export default function Authenticated({ header, children }) {
                     .sort((a, b) => a - b)
                     .join("-")}`;
             }
-            // console.log("Start listening on channel ", channel);
 
             Echo.private(channel)
                 .error((error) => {
@@ -257,6 +269,7 @@ export default function Authenticated({ header, children }) {
             </div>
             <Toast />
             <NewMessageNotification />
+            <NewUsersNotification />
         </>
     );
 }

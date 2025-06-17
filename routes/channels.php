@@ -23,3 +23,7 @@ Broadcast::channel('group.deleted.{groupId}', function (User $user, int $groupId
 Broadcast::channel('group.statusChange.{groupId}', function (User $user, int $groupId) {
     return $user->groups->contains('id', $groupId);
 });
+
+Broadcast::channel('admin.notifications.{adminId}', function ($user, $adminId) {
+    return $user->is_asesor;
+});

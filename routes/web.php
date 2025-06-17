@@ -9,12 +9,16 @@ use App\Http\Controllers\MessageReactionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Helpers\QuickReplies;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 Route::get('/landing', function () {
     return Inertia::render('LandingPage');
 });
 
 Route::post('/groups/create-for-client', [GroupController::class, 'createForClient'])->name('groups.createForClient');
+Route::post('/check-phone', [UserController::class, 'checkPhone'])->name('user.checkPhone');
 
 Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');

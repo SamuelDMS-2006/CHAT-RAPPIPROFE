@@ -187,16 +187,16 @@ function Home({ selectedConversation = null, messages = null }) {
     }, [messages, currentUser]);
 
     useEffect(() => {
-        const offReply = on("message.reply", ({ message }) => setReplyTo(message));
+        const offReply = on("message.reply", ({ message }) =>
+            setReplyTo(message)
+        );
         return () => offReply();
     }, [on]);
 
     const handleReact = async (messageId, emoji) => {
         setLocalMessages((prev) =>
             prev.map((msg) =>
-                msg.id === messageId
-                    ? { ...msg, reacting: true }
-                    : msg
+                msg.id === messageId ? { ...msg, reacting: true } : msg
             )
         );
         try {
@@ -206,26 +206,32 @@ function Home({ selectedConversation = null, messages = null }) {
                     prev.map((msg) =>
                         msg.id === messageId
                             ? {
-                                ...msg,
-                                reactions: (msg.reactions || []).filter(r => r.user_id !== currentUser.id),
-                                reacting: false
-                            }
+                                  ...msg,
+                                  reactions: (msg.reactions || []).filter(
+                                      (r) => r.user_id !== currentUser.id
+                                  ),
+                                  reacting: false,
+                              }
                             : msg
                     )
                 );
             } else {
-                const res = await axios.post(`/messages/${messageId}/react`, { reaction: emoji });
+                const res = await axios.post(`/messages/${messageId}/react`, {
+                    reaction: emoji,
+                });
                 setLocalMessages((prev) =>
                     prev.map((msg) =>
                         msg.id === messageId
                             ? {
-                                ...msg,
-                                reactions: [
-                                    ...(msg.reactions || []).filter(r => r.user_id !== currentUser.id),
-                                    res.data.reaction
-                                ],
-                                reacting: false
-                            }
+                                  ...msg,
+                                  reactions: [
+                                      ...(msg.reactions || []).filter(
+                                          (r) => r.user_id !== currentUser.id
+                                      ),
+                                      res.data.reaction,
+                                  ],
+                                  reacting: false,
+                              }
                             : msg
                     )
                 );
@@ -233,25 +239,26 @@ function Home({ selectedConversation = null, messages = null }) {
         } catch {
             setLocalMessages((prev) =>
                 prev.map((msg) =>
-                    msg.id === messageId
-                        ? { ...msg, reacting: false }
-                        : msg
+                    msg.id === messageId ? { ...msg, reacting: false } : msg
                 )
             );
         }
     };
 
     useEffect(() => {
-    if (!window.Echo || !localMessages.length) return;
+        if (!window.Echo || !localMessages.length) return;
 
         // Suscríbete a todos los mensajes visibles
-        const channels = localMessages.map(msg =>
-            window.Echo.private(`chat.message.${msg.id}`)
-                .listen('MessageReacted', (e) => {
-                    setLocalMessages(prev =>
-                        prev.map(m => {
+        const channels = localMessages.map((msg) =>
+            window.Echo.private(`chat.message.${msg.id}`).listen(
+                "MessageReacted",
+                (e) => {
+                    setLocalMessages((prev) =>
+                        prev.map((m) => {
                             if (m.id !== e.reaction.message_id) return m;
-                            let newReactions = (m.reactions || []).filter(r => r.user_id !== e.reaction.user.id);
+                            let newReactions = (m.reactions || []).filter(
+                                (r) => r.user_id !== e.reaction.user.id
+                            );
                             if (e.reaction.action === "add") {
                                 newReactions.push({
                                     id: e.reaction.id,
@@ -262,11 +269,14 @@ function Home({ selectedConversation = null, messages = null }) {
                             return { ...m, reactions: newReactions };
                         })
                     );
-                })
+                }
+            )
         );
 
         return () => {
-            channels.forEach(channel => channel.stopListening('MessageReacted'));
+            channels.forEach((channel) =>
+                channel.stopListening("MessageReacted")
+            );
         };
     }, [localMessages]);
 
@@ -330,11 +340,6 @@ function Home({ selectedConversation = null, messages = null }) {
                                         </div>
                                     )}
                                 </div>
-                                <MessageInput 
-                                    conversation={selectedConversation}
-                                    replyTo={replyTo}
-                                    onCancelReply={() => setReplyTo(null)}
-                                />
                             </>
                         ) : (
                             <div className="flex justify-center items-center h-full">
@@ -372,12 +377,20 @@ function Home({ selectedConversation = null, messages = null }) {
 
                     {selectedConversation.is_group ? (
                         userIsInConversation ? (
-                            <MessageInput conversation={conversation} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+                            <MessageInput
+                                conversation={conversation}
+                                replyTo={replyTo}
+                                onCancelReply={() => setReplyTo(null)}
+                            />
                         ) : (
                             <div></div>
                         )
                     ) : (
-                        <MessageInput conversation={conversation} replyTo={replyTo} onCancelReply={() => setReplyTo(null)}/>
+                        <MessageInput
+                            conversation={conversation}
+                            replyTo={replyTo}
+                            onCancelReply={() => setReplyTo(null)}
+                        />
                     )}
                 </>
             )}

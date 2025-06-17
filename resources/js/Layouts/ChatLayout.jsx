@@ -106,6 +106,14 @@ const ChatLayout = ({ children }) => {
                 router.visit(route("dashboard"));
             }
         });
+        const offNewGroup = on("group.created", ({ message, group }) => {
+            const newGroup = {
+                ...group,
+                is_group: true,
+            };
+
+            setLocalConversations((prevGrupos) => [...prevGrupos, newGroup]);
+        });
 
         return () => {
             offCreated();
@@ -113,6 +121,7 @@ const ChatLayout = ({ children }) => {
             offModalShow();
             offGroupDelete();
             offChangeStatus();
+            offNewGroup();
         };
     }, [on]);
 

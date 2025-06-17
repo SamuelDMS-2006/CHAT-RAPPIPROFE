@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Group;
 use App\Jobs\DeleteGroupJob;
 use App\Events\SocketGroups;
 use Illuminate\Support\Facades\DB;
 use App\Events\GroupStatusChanged;
+use App\Events\UsersNotifications;
+use App\Events\asignedGroup;
 use App\Http\Requests\StoreGroupRequest;
 use App\Http\Requests\UpdateGroupRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\Auth;
 
 class GroupController extends Controller
 {
@@ -35,12 +38,19 @@ class GroupController extends Controller
     {
         try {
             DB::beginTransaction();
-            $oldAsesorId = $group->asesor;
 
-            if ($oldAsesorId && $oldAsesorId != $asesorId) {
-                $group->users()->detach($oldAsesorId);
+            $idsAEliminar = $group->users()
+                ->where(function ($query) use ($group) {
+                    $query->where('users.id', $group->asesor)
+                        ->orWhere('users.is_asesor', true);
+                })
+                ->where('users.id', '!=', $asesorId)
+                ->where('users.is_admin', false)
+                ->pluck('users.id');
+
+            if ($idsAEliminar->isNotEmpty()) {
+                $group->users()->detach($idsAEliminar);
             }
-
 
             $group->users()->syncWithoutDetaching([$asesorId]);
 
@@ -48,20 +58,16 @@ class GroupController extends Controller
 
             DB::commit();
 
-            $group->refresh();
+            $group->refresh()->load('users');
 
             broadcast(new SocketGroups($group, 'asesor_changed'))->toOthers();
 
-            $message = "Asesor asignado correctamente.";
-            return response()->json(['message' => $message]);
+            return response()->json(['message' => 'Asesor asignado correctamente.']);
         } catch (\Exception $e) {
             DB::rollBack();
-
-
             return response()->json(['message' => 'Ocurrió un error al asignar el asesor.'], 500);
         }
     }
-
 
 
     public function changeStatus(Group $group, $code_status)
@@ -103,51 +109,96 @@ class GroupController extends Controller
         return response()->json(['message' => 'Group delete was scheduled and will be deleted soon']);
     }
 
-    public function createForClient(\Illuminate\Http\Request $request)
+    public function createForClient(Request $request)
     {
-        $request->validate([
-            'telefono' => 'required|string|max:30',
-            'nombre' => 'required|string|max:100',
-            'email' => 'required|email|max:255|unique:users,email',
-        ]);
-
         try {
-            $group = DB::transaction(function () use ($request) {
-                $asesor = User::where('is_asesor', true)
-                    ->inRandomOrder()
-                    ->first();
+            $shouldNotify = false;
+            $user = User::where('telefono', $request->telefono)->first();
+            $group = DB::transaction(function () use ($request, $user, &$shouldNotify) {
 
-                if (!$asesor) {
-                    throw new \Exception('No hay asesores disponibles para asignar.');
+                if ($user) {
+                    $request->validate([
+                        'telefono' => 'required|string',
+                        'password' => 'required|string',
+                    ]);
+
+                    if (!Auth::attempt(['telefono' => $request->telefono, 'password' => $request->password])) {
+                        throw new \Exception('Las credenciales para el usuario existente son inválidas.');
+                    }
+
+                    if ($user->group_asigned) {
+                        $group = Group::find($user->group_asigned);
+                        if (!$group) {
+                            throw new \Exception('El grupo asignado al usuario no fue encontrado.');
+                        }
+                    } else {
+                        $asesores = User::where('is_asesor', true)->get();
+                        if ($asesores->isEmpty()) {
+                            throw new \Exception('No hay asesores disponibles para asignar.');
+                        }
+                        $asesor = $asesores->first();
+
+                        $group = Group::create([
+                            'name'     => $user->telefono . ' - ' . $user->name,
+                            'owner_id' => $asesor->id,
+                            'asesor'   => $asesor->id,
+                        ]);
+
+                        $user->update(['group_asigned' => $group->id]);
+
+                        $shouldNotify = true;
+                    }
+
+                    return $group;
+                } else {
+                    $shouldNotify = true;
+
+                    $request->validate([
+                        'telefono' => 'required|string|max:30|unique:users,telefono',
+                        'nombre'   => 'required|string|max:100',
+                        'email'    => 'required|email|max:255|unique:users,email',
+                    ]);
+
+                    $asesores = User::where('is_asesor', true)->get();
+                    if ($asesores->isEmpty()) {
+                        throw new \Exception('No hay asesores disponibles para asignar.');
+                    }
+                    $asesor = $asesores->first();
+
+                    $group = Group::create([
+                        'name'     => $request->telefono . ' - ' . $request->nombre,
+                        'owner_id' => $asesor->id,
+                        'asesor'   => $asesor->id,
+                    ]);
+
+                    $newUser = User::create([
+                        'name'          => $request->nombre,
+                        'email'         => $request->email,
+                        'telefono'      => $request->telefono,
+                        'group_asigned' => $group->id,
+                        'password'      => Hash::make($request->password ?? 'password'),
+                    ]);
+
+                    $userIds = $asesores->pluck('id')->toArray();
+                    $userIds[] = $newUser->id;
+                    $group->users()->attach(array_unique($userIds));
+
+                    auth()->login($newUser);
+
+                    return $group;
                 }
-
-                $admin = User::where('is_admin', true)->first();
-                if (!$admin) {
-                    throw new \Exception('No se encontró un usuario administrador para asignar.');
-                }
-
-                $group = Group::create([
-                    'name' => $request->telefono . ' - ' . $request->nombre,
-                    'owner_id' => $asesor->id,
-                    'asesor' => $asesor->id,
-                ]);
-
-                $user = User::create([
-                    'name' => $request->nombre,
-                    'email' => $request->email,
-                    'group_asigned' => $group->id,
-                    'password' => Hash::make($request->telefono),
-                ]);
-
-                $usersToAttach = array_unique([$user->id, $asesor->id, $admin->id]);
-                $group->users()->attach($usersToAttach);
-
-                auth()->login($user);
-
-                return $group;
             });
 
+            if ($shouldNotify) {
+                $admins = User::where('is_asesor', true)->get();
+                foreach ($admins as $admin) {
+                    broadcast(new UsersNotifications($group, "Nuevo cliente registrado: {$request->telefono}", $admin->id));
+                }
+            }
+
             return response()->json(['group_id' => $group->id]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'Datos inválidos.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }

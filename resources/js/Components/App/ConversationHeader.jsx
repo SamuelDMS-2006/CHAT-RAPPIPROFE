@@ -166,7 +166,7 @@ const ConversationHeader = ({ selectedConversation, onGroup }) => {
                             <GroupUsersPopover
                                 users={localConversations.users}
                             />
-                            {localConversations.owner_id == currentUser.id && (
+                            {currentUser.is_admin && (
                                 <>
                                     <div
                                         className="tooltip tooltip-left"

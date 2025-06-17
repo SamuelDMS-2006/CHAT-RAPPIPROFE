@@ -8,6 +8,7 @@ import MessageOptionsDropdown from "./MessageOptionsDropdown";
 
 const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
     const currentUser = usePage().props.auth.user;
+    const isOwn = message.sender_id === currentUser.id;
 
     return (
         <div
@@ -19,7 +20,6 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
             }
         >
             {<UserAvatar user={message.sender} />}
-
 
             <div className="chat-header">
                 {message.sender_id !== currentUser.id
@@ -38,7 +38,7 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
                     <span className="italic">{message.reply_to.message}</span>
                 </div>
             )}
-                    
+
             <div
                 className={
                     "chat-bubble relative " +
@@ -46,11 +46,12 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
                         ? " chat-bubble-info"
                         : "")
                 }
-            > 
-                <MessageOptionsDropdown 
-                    message={message} 
+            >
+                <MessageOptionsDropdown
+                    message={message}
                     currentUser={currentUser}
                     onReact={onReact}
+                    position={isOwn ? "left" : "right"}
                 />
                 <div className="chat-message">
                     <div className="chat-message-content">
@@ -69,10 +70,21 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
                     {message.reactions.map((r, idx) => (
                         <span
                             key={idx}
-                            className={`bg-gray-700 rounded-full px-2 py-1 text-sm ${r.user_id === currentUser.id ? "border border-blue-400 cursor-pointer" : ""}`}
-                            title={r.user_id === currentUser.id ? "Eliminar mi reacción" : ""}
+                            className={`bg-gray-700 rounded-full px-2 py-1 text-sm ${
+                                r.user_id === currentUser.id
+                                    ? "border border-blue-400 cursor-pointer"
+                                    : ""
+                            }`}
+                            title={
+                                r.user_id === currentUser.id
+                                    ? "Eliminar mi reacción"
+                                    : ""
+                            }
                             onClick={() => {
-                                if (r.user_id === currentUser.id && typeof onReact === "function") {
+                                if (
+                                    r.user_id === currentUser.id &&
+                                    typeof onReact === "function"
+                                ) {
                                     onReact(message.id, null); // null para indicar eliminación
                                 }
                             }}

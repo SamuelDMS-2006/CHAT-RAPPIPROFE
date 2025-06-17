@@ -18,12 +18,13 @@ class UserController extends Controller
             'name' => 'required|string',
             'password' => 'required|string|min:6',
             'email' => ['required', 'email', 'unique:users,email'],
+            'telefono' => 'required|string|min:9',
             'is_admin' => 'boolean',
             'is_asesor' => 'boolean',
         ]);
 
         $rawPassword = $request->password; // Guardas la versión sin encriptar
-        $data = $request->only('name', 'email', 'is_admin', 'is_asesor',);
+        $data = $request->only('name', 'email', 'is_admin', 'is_asesor', 'telefono');
         $data['password'] = bcrypt($rawPassword); // Encriptas
         $data['email_verified_at'] = now();
 
@@ -34,6 +35,12 @@ class UserController extends Controller
         return redirect()->back();
     }
 
+    public function checkPhone(Request $request)
+    {
+        $request->validate(['telefono' => 'required|string']);
+        $userExists = User::where('telefono', $request->telefono)->exists();
+        return response()->json(['exists' => $userExists]);
+    }
 
     public function setRoleAdmin(User $user)
     {
