@@ -190,144 +190,155 @@ const ChatLayout = ({ children }) => {
 
     return (
         <>
-            {((currentUser.is_admin || currentUser.is_asesor) && (
-                <div className="flex-1 w-full flex overflow-hidden">
-                    <div
-                        className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
-                            selectedConversation ? "-ml-[100%] sm:ml-0" : ""
-                        }`}
-                    >
-                        <div className="flex items-center justify-between py-2 px-3 text-xl font-medium text-gray-200">
-                            My Conversations
-                            <div
-                                className="tooltip tooltip-left"
-                                data-tip="Create new Group"
-                            >
-                                <button
-                                    onClick={(ev) => setShowGroupModal(true)}
-                                    className="text-gray-400 hover:text-gray-200"
+            <div className="h-screen flex flex-col">
+                {((currentUser.is_admin || currentUser.is_asesor) && (
+                    <div className="flex-1 w-full flex overflow-hidden">
+                        <div
+                            className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
+                                selectedConversation ? "-ml-[100%] sm:ml-0" : ""
+                            }`}
+                        >
+                            <div className="flex items-center justify-between py-2 px-3 text-xl font-medium text-gray-200">
+                                My Conversations
+                                <div
+                                    className="tooltip tooltip-left"
+                                    data-tip="Create new Group"
                                 >
-                                    <PencilSquareIcon className="w-4 h-4 inline-block ml-2" />
-                                </button>
+                                    <button
+                                        onClick={(ev) =>
+                                            setShowGroupModal(true)
+                                        }
+                                        className="text-gray-400 hover:text-gray-200"
+                                    >
+                                        <PencilSquareIcon className="w-4 h-4 inline-block ml-2" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-3">
+                                <PrimaryButton
+                                    onClick={(ev) => setShowNewUserModal(true)}
+                                    className="w-full"
+                                >
+                                    <UserPlusIcon className="h-5 w-5 mr-2" />
+                                    Add New User
+                                </PrimaryButton>
+
+                                <div className="p-1"></div>
+                                <TextInput
+                                    onKeyUp={onSearch}
+                                    placeholder="Filter users and groups"
+                                    className="w-full"
+                                />
+                            </div>
+                            <div className="flex-1 overflow-auto">
+                                <div className="p-3">
+                                    {sortedConversations &&
+                                        filterBySearch(
+                                            sortedConversations.filter(
+                                                (conversation) =>
+                                                    conversation.is_group
+                                            )
+                                        ).map((conversation) => (
+                                            <ConversationItem
+                                                key={`group_${conversation.id}`}
+                                                conversation={conversation}
+                                                online={
+                                                    !!isUserOnline(
+                                                        conversation.id
+                                                    )
+                                                }
+                                                selectedConversation={
+                                                    selectedConversation
+                                                }
+                                            />
+                                        ))}
+                                </div>
+                                <div className="p-3">
+                                    Admins
+                                    {sortedConversations &&
+                                        filterBySearch(
+                                            sortedConversations.filter(
+                                                (conversation) =>
+                                                    conversation.is_admin
+                                            )
+                                        ).map((conversation) => (
+                                            <ConversationItem
+                                                key={`admin_${conversation.id}`}
+                                                conversation={conversation}
+                                                online={
+                                                    !!isUserOnline(
+                                                        conversation.id
+                                                    )
+                                                }
+                                                selectedConversation={
+                                                    selectedConversation
+                                                }
+                                            />
+                                        ))}
+                                </div>
+
+                                <div className="p-3">
+                                    Asesors
+                                    {sortedConversations &&
+                                        filterBySearch(
+                                            sortedConversations.filter(
+                                                (conversation) =>
+                                                    conversation.is_asesor &&
+                                                    !conversation.is_admin
+                                            )
+                                        ).map((conversation) => (
+                                            <ConversationItem
+                                                key={`asesor_${conversation.id}`}
+                                                conversation={conversation}
+                                                online={
+                                                    !!isUserOnline(
+                                                        conversation.id
+                                                    )
+                                                }
+                                                selectedConversation={
+                                                    selectedConversation
+                                                }
+                                            />
+                                        ))}
+                                </div>
+
+                                <div className="p-3">
+                                    users
+                                    {sortedConversations &&
+                                        filterBySearch(
+                                            sortedConversations.filter(
+                                                (conversation) =>
+                                                    !conversation.is_group &&
+                                                    !conversation.is_admin &&
+                                                    !conversation.is_asesor
+                                            )
+                                        ).map((conversation) => (
+                                            <ConversationItem
+                                                key={`user_${conversation.id}`}
+                                                conversation={conversation}
+                                                online={
+                                                    !!isUserOnline(
+                                                        conversation.id
+                                                    )
+                                                }
+                                                selectedConversation={
+                                                    selectedConversation
+                                                }
+                                            />
+                                        ))}
+                                </div>
                             </div>
                         </div>
-                        <div className="p-3">
-                            <PrimaryButton
-                                onClick={(ev) => setShowNewUserModal(true)}
-                                className="w-full"
-                            >
-                                <UserPlusIcon className="h-5 w-5 mr-2" />
-                                Add New User
-                            </PrimaryButton>
-
-                            <div className="p-1"></div>
-                            <TextInput
-                                onKeyUp={onSearch}
-                                placeholder="Filter users and groups"
-                                className="w-full"
-                            />
-                        </div>
-                        <div className="flex-1 overflow-auto">
-                            <div className="p-3">
-                                {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                conversation.is_group
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`group_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
-                            </div>
-                            <div className="p-3">
-                                Admins
-                                {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                conversation.is_admin
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`admin_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
-                            </div>
-
-                            <div className="p-3">
-                                Asesors
-                                {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                conversation.is_asesor &&
-                                                !conversation.is_admin
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`asesor_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
-                            </div>
-
-                            <div className="p-3">
-                                users
-                                {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                !conversation.is_group &&
-                                                !conversation.is_admin &&
-                                                !conversation.is_asesor
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`user_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
-                            </div>
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            {children}
                         </div>
                     </div>
+                )) || (
                     <div className="flex-1 flex flex-col overflow-hidden">
                         {children}
                     </div>
-                </div>
-            )) || (
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    {children}
-                </div>
-            )}
-
+                )}
+            </div>
             <GroupModal
                 show={showGroupModal}
                 onClose={() => setShowGroupModal(false)}
