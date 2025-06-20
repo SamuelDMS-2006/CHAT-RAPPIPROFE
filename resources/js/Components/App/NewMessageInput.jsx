@@ -2,9 +2,19 @@ import React, { useEffect, useRef, useState } from "react";
 
 /**
  * Componente de entrada de mensajes con sugerencias de quick replies.
- * Obtiene los comandos desde el backend (PHP) y muestra sugerencias al escribir "/".
+ * Mejorado para parecerse al input de WhatsApp.
  */
-const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor", replyTo, onCancelReply }) => {
+const NewMessageInput = ({
+    value,
+    onChange,
+    onSend,
+    userRole = "asesor",
+    replyTo,
+    onCancelReply,
+    className = "",
+    placeholder = "Escribe un mensaje",
+    onKeyDown,
+}) => {
     const input = useRef();
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
@@ -40,6 +50,7 @@ const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor", replyTo
             ev.preventDefault();
             onSend();
         }
+        if (onKeyDown) onKeyDown(ev);
     };
 
     // Manejar cambios en el textarea y mostrar sugerencias si corresponde
@@ -86,7 +97,7 @@ const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor", replyTo
     }, [value]);
 
     return (
-        <div className="relative w-full">
+        <div className={`relative w-full ${className}`}>
             {showSuggestions && (
                 <ul className="absolute left-0 bottom-full w-full mb-2 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-auto animate-fade-in"
                     style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}
@@ -108,11 +119,15 @@ const NewMessageInput = ({ value, onChange, onSend, userRole = "asesor", replyTo
                 ref={input}
                 value={value}
                 rows="1"
-                placeholder="Escribe un mensaje"
+                placeholder={placeholder}
                 onKeyDown={onInputKeyDown}
                 onChange={onChangeEvent}
-                className="input input-bordered w-full rounded-r-none resize-none overflow-y-auto max-h-40"
-                autoComplete="off"
+                className="w-full resize-none overflow-y-auto max-h-32 bg-transparent text-gray-100 rounded-full px-0 py-2 focus:ring-0 focus:outline-none placeholder-gray-400 transition-all align-middle"
+                style={{
+                    minHeight: "40px",
+                    boxShadow: "none",
+                    border: "none",
+                }}
             ></textarea>
         </div>
     );

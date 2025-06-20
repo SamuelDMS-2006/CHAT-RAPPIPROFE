@@ -4,22 +4,22 @@ import { useState } from "react";
 const AudioRecorder = ({ fileReady }) => {
     const [mediaRecorder, setMediaRecorder] = useState(null);
     const [recording, setRecording] = useState(false);
+    const [stream, setStream] = useState(null);
 
     const onMicrophoneClick = async () => {
         if (recording) {
             setRecording(false);
             if (mediaRecorder) {
                 mediaRecorder.stop();
-                setMediaRecorder(null);
             }
             return;
         }
-        setRecording(true);
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
+            const userStream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
             });
-            const newMediaRecorder = new MediaRecorder(stream);
+            setStream(userStream);
+            const newMediaRecorder = new MediaRecorder(userStream);
             const chunks = [];
 
             newMediaRecorder.addEventListener("dataavailable", (event) => {
@@ -37,10 +37,18 @@ const AudioRecorder = ({ fileReady }) => {
                 const url = URL.createObjectURL(audioFile);
 
                 fileReady(audioFile, url);
+
+                // Detener el stream de audio para liberar el micrófono
+                if (userStream) {
+                    userStream.getTracks().forEach((track) => track.stop());
+                }
+                setStream(null);
+                setMediaRecorder(null);
             });
 
             newMediaRecorder.start();
             setMediaRecorder(newMediaRecorder);
+            setRecording(true);
         } catch (error) {
             setRecording(false);
             console.error("Error accessing microphone:", error);
@@ -50,10 +58,19 @@ const AudioRecorder = ({ fileReady }) => {
     return (
         <button
             onClick={onMicrophoneClick}
-            className="p-1 text-gray-400 hover:text-gray-200"
+            className={`p-1 flex items-center ${
+                recording
+                    ? "text-red-500 animate-pulse"
+                    : "text-gray-400 hover:text-gray-200"
+            }`}
+            aria-label={recording ? "Detener grabación" : "Grabar audio"}
+            type="button"
         >
-            {recording && <StopCircleIcon className="w-6 text-red-600" />}
-            {!recording && <MicrophoneIcon className="w-6" />}
+            {recording ? (
+                <StopCircleIcon className="w-6" />
+            ) : (
+                <MicrophoneIcon className="w-6" />
+            )}
         </button>
     );
 };

@@ -13,7 +13,7 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
     return (
         <div
             className={
-                "chat " +
+                "chat z-20 " +
                 (message.sender_id === currentUser.id
                     ? "chat-end"
                     : "chat-start")

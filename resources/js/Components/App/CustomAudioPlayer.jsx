@@ -68,7 +68,7 @@ const CustomAudioPlayer = ({ file, showVolume = true }) => {
             )}
             <input
                 type="range"
-                className="flex-1"
+                className="flex-1 w-full"
                 min="0"
                 max={duration}
                 step="0.01"
