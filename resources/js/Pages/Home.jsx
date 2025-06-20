@@ -295,114 +295,104 @@ function Home({ selectedConversation = null, messages = null }) {
                 )
             ) : (
                 <>
-                    <div className="flex flex-col h-full">
-                        {currentUser.is_admin || currentUser.is_asesor ? (
-                            userIsInConversation ? (
-                                <ConversationHeader
-                                    selectedConversation={selectedConversation}
-                                    onGroup={true}
-                                />
-                            ) : (
-                                <ConversationHeader
-                                    selectedConversation={selectedConversation}
-                                    onGroup={false}
-                                />
-                            )
+                    {currentUser.is_admin || currentUser.is_asesor ? (
+                        userIsInConversation ? (
+                            <ConversationHeader
+                                selectedConversation={selectedConversation}
+                                onGroup={true}
+                            />
                         ) : (
-                            <div></div>
-                        )}
+                            <ConversationHeader
+                                selectedConversation={selectedConversation}
+                                onGroup={false}
+                            />
+                        )
+                    ) : (
+                        <div></div>
+                    )}
 
-                        {selectedConversation.is_group ? (
-                            userIsInConversation ? (
-                                <>
-                                    <div
-                                        ref={messagesCtrRef}
-                                        className="flex-1 overflow-y-auto p-5"
-                                    >
-                                        {localMessages.length === 0 ? (
-                                            <div className="flex justify-center items-center h-full">
-                                                <div className="text-lg text-slate-200">
-                                                    No messages found
-                                                </div>
+                    {selectedConversation.is_group ? (
+                        userIsInConversation ? (
+                            <>
+                                <div
+                                    ref={messagesCtrRef}
+                                    className="flex-1 overflow-y-auto p-5"
+                                >
+                                    {localMessages.length === 0 ? (
+                                        <div className="flex justify-center items-center h-full">
+                                            <div className="text-lg text-slate-200">
+                                                No messages found
                                             </div>
-                                        ) : (
-                                            <div className="overflow-y-auto h-full">
-                                                <div
-                                                    ref={loadMoreIntersect}
-                                                ></div>
-                                                {localMessages.map(
-                                                    (message) => (
-                                                        <MessageItem
-                                                            key={message.id}
-                                                            message={message}
-                                                            attachmentClick={
-                                                                onAttachmentClick
-                                                            }
-                                                            onReply={setReplyTo}
-                                                            onReact={
-                                                                handleReact
-                                                            }
-                                                        />
-                                                    )
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 flex flex-col">
+                                            <div ref={loadMoreIntersect}></div>
+                                            {localMessages.map((message) => (
+                                                <MessageItem
+                                                    key={message.id}
+                                                    message={message}
+                                                    attachmentClick={
+                                                        onAttachmentClick
+                                                    }
+                                                    onReply={setReplyTo}
+                                                    onReact={handleReact}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex justify-center items-center h-full">
+                                <div className="text-lg text-slate-200">
+                                    No perteneces al grupo
+                                </div>
+                            </div>
+                        )
+                    ) : (
+                        <div
+                            ref={messagesCtrRef}
+                            className="flex-1 overflow-y-auto p-5"
+                        >
+                            {localMessages.length === 0 ? (
                                 <div className="flex justify-center items-center h-full">
                                     <div className="text-lg text-slate-200">
-                                        No perteneces al grupo
+                                        No messages found
                                     </div>
                                 </div>
-                            )
-                        ) : (
-                            <div
-                                ref={messagesCtrRef}
-                                className="flex-1 overflow-y-auto p-5"
-                            >
-                                {localMessages.length === 0 ? (
-                                    <div className="flex justify-center items-center h-full">
-                                        <div className="text-lg text-slate-200">
-                                            No messages found
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="overflow-y-auto h-full">
-                                        <div ref={loadMoreIntersect}></div>
-                                        {localMessages.map((message) => (
-                                            <MessageItem
-                                                key={message.id}
-                                                message={message}
-                                                attachmentClick={
-                                                    onAttachmentClick
-                                                }
-                                                onReact={handleReact}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {selectedConversation.is_group ? (
-                            userIsInConversation ? (
-                                <MessageInput
-                                    conversation={conversation}
-                                    replyTo={replyTo}
-                                    onCancelReply={() => setReplyTo(null)}
-                                />
                             ) : (
-                                <div></div>
-                            )
-                        ) : (
+                                <div className="flex-1 flex flex-col">
+                                    <div ref={loadMoreIntersect}></div>
+                                    {localMessages.map((message) => (
+                                        <MessageItem
+                                            key={message.id}
+                                            message={message}
+                                            attachmentClick={onAttachmentClick}
+                                            onReact={handleReact}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {selectedConversation.is_group ? (
+                        userIsInConversation ? (
                             <MessageInput
                                 conversation={conversation}
                                 replyTo={replyTo}
                                 onCancelReply={() => setReplyTo(null)}
                             />
-                        )}
-                    </div>
+                        ) : (
+                            <div></div>
+                        )
+                    ) : (
+                        <MessageInput
+                            conversation={conversation}
+                            replyTo={replyTo}
+                            onCancelReply={() => setReplyTo(null)}
+                        />
+                    )}
                 </>
             )}
 

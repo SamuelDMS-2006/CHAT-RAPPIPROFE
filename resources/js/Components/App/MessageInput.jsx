@@ -101,7 +101,7 @@ const MessageInput = ({
     };
 
     return (
-        <div className="w-full max-w-full px-2 py-2 bg-slate-800 border-t border-slate-700 bottom-0 left-0 right-0 z-50">
+        <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
             {/* Barra de reply */}
             {replyTo && (
                 <div className="w-full bg-gray-700 text-gray-200 p-2 rounded mb-2 flex justify-between items-center">
