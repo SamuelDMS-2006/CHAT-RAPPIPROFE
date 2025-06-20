@@ -54,7 +54,7 @@ jobs:
                   port: ${{ secrets.SSH_PORT }}
                   key: ${{ secrets.SSH_KEY }}
                   script: |
-                      cd /htdocs/srv872397.hstgr.cloud
+                      cd /home/user/htdocs/srv872397.hstgr.cloud
                       git checkout main
                       if git rev-parse -q --verify "refs/tags/${{ github.event.release.tag_name }}";
                       then
