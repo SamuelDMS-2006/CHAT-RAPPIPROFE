@@ -101,7 +101,7 @@ const MessageInput = ({
     };
 
     return (
-        <div className="w-full max-w-full px-1 sm:px-2 py-2 bg-slate-800 border-t border-slate-700">
+        <div className="w-full max-w-full px-2 py-2 bg-slate-800 border-t border-slate-700 bottom-0 left-0 right-0 z-50">
             {/* Barra de reply */}
             {replyTo && (
                 <div className="w-full bg-gray-700 text-gray-200 p-2 rounded mb-2 flex justify-between items-center">
@@ -132,14 +132,19 @@ const MessageInput = ({
                                 {isAudio(file.file) && (
                                     // El audio player ocupa el 100% del ancho disponible de su contenedor
                                     <div className="w-full max-w-full">
-                                        <CustomAudioPlayer file={file} showVolume={false} />
+                                        <CustomAudioPlayer
+                                            file={file}
+                                            showVolume={false}
+                                        />
                                     </div>
                                 )}
                                 <button
                                     onClick={() =>
                                         setChosenFiles(
                                             chosenFiles.filter(
-                                                (f) => f.file.name !== file.file.name
+                                                (f) =>
+                                                    f.file.name !==
+                                                    file.file.name
                                             )
                                         )
                                     }
@@ -169,8 +174,16 @@ const MessageInput = ({
             <div className="flex items-center gap-1 bg-slate-700 rounded-full px-2 py-1 w-full max-w-full relative flex-wrap">
                 {/* Botón de emojis */}
                 <Popover className="relative flex items-center">
-                    <Popover.Button className="p-2 rounded-full text-gray-400 hover:text-gray-300 flex items-center focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                        style={{ minWidth: 40, minHeight: 40, justifyContent: "center", alignItems: "center", display: "flex" }}>
+                    <Popover.Button
+                        className="p-2 rounded-full text-gray-400 hover:text-gray-300 flex items-center focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                        style={{
+                            minWidth: 40,
+                            minHeight: 40,
+                            justifyContent: "center",
+                            alignItems: "center",
+                            display: "flex",
+                        }}
+                    >
                         <FaceSmileIcon className="w-6 h-6" />
                     </Popover.Button>
                     <Popover.Panel className="absolute z-10 left-0 bottom-full">

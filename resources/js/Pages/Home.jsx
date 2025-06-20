@@ -326,7 +326,7 @@ function Home({ selectedConversation = null, messages = null }) {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="flex-1 flex flex-col">
+                                            <div className="overflow-y-auto h-full">
                                                 <div
                                                     ref={loadMoreIntersect}
                                                 ></div>
@@ -368,7 +368,7 @@ function Home({ selectedConversation = null, messages = null }) {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex-1 flex flex-col">
+                                    <div className="overflow-y-auto h-full">
                                         <div ref={loadMoreIntersect}></div>
                                         {localMessages.map((message) => (
                                             <MessageItem
@@ -385,25 +385,23 @@ function Home({ selectedConversation = null, messages = null }) {
                             </div>
                         )}
 
-                        <div className="flex-shrink-0">
-                            {selectedConversation.is_group ? (
-                                userIsInConversation ? (
-                                    <MessageInput
-                                        conversation={conversation}
-                                        replyTo={replyTo}
-                                        onCancelReply={() => setReplyTo(null)}
-                                    />
-                                ) : (
-                                    <div></div>
-                                )
-                            ) : (
+                        {selectedConversation.is_group ? (
+                            userIsInConversation ? (
                                 <MessageInput
                                     conversation={conversation}
                                     replyTo={replyTo}
                                     onCancelReply={() => setReplyTo(null)}
                                 />
-                            )}
-                        </div>
+                            ) : (
+                                <div></div>
+                            )
+                        ) : (
+                            <MessageInput
+                                conversation={conversation}
+                                replyTo={replyTo}
+                                onCancelReply={() => setReplyTo(null)}
+                            />
+                        )}
                     </div>
                 </>
             )}
