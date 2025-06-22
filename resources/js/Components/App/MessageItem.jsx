@@ -14,9 +14,9 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
         <div
             className={
                 "chat z-20 " +
-                (message.sender_id === currentUser.id
-                    ? "chat-end"
-                    : "chat-start")
+                (isOwn
+                    ? "chat-end ml-auto max-w-[80%] sm:max-w-[60%]"
+                    : "chat-start max-w-[80%] sm:max-w-[60%]")
             }
         >
             {<UserAvatar user={message.sender} />}
@@ -41,7 +41,7 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
 
             <div
                 className={
-                    "chat-bubble relative " +
+                    "chat-bubble relative w-full " +
                     (message.sender_id === currentUser.id
                         ? " chat-bubble-info"
                         : "")

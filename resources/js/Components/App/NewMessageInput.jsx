@@ -122,7 +122,7 @@ const NewMessageInput = ({
                 placeholder={placeholder}
                 onKeyDown={onInputKeyDown}
                 onChange={onChangeEvent}
-                className="w-full resize-none overflow-y-auto max-h-32 bg-transparent text-gray-100 rounded-full px-0 py-2 focus:ring-0 focus:outline-none placeholder-gray-400 transition-all align-middle"
+                className="w-full resize-none overflow-y-auto max-h-32 bg-transparent text-gray-100 px-0 py-2 focus:ring-0 focus:outline-none placeholder-gray-400 transition-all align-middle"
                 style={{
                     minHeight: "40px",
                     boxShadow: "none",
