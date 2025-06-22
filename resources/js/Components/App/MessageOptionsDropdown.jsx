@@ -15,8 +15,11 @@ export default function MessageOptionsDropdown({
     const { emit } = useEventBus();
     currentUser = currentUser || usePage().props.auth.user;
     const emojiBtnRef = useRef();
+    const menuBtnRef = useRef();
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [openDirection, setOpenDirection] = useState("up");
+    const [emojiPopoverPosition, setEmojiPopoverPosition] = useState("center");
+    const [menuPopoverPosition, setMenuPopoverPosition] = useState("center"); // 1. Nuevo estado
 
     // Encuentra la reacción del usuario actual (si existe)
     const userReaction = message.reactions?.find(r => r.user_id === currentUser.id);
@@ -52,7 +55,15 @@ export default function MessageOptionsDropdown({
     useEffect(() => {
         if (showEmojiPicker && emojiBtnRef.current) {
             const rect = emojiBtnRef.current.getBoundingClientRect();
-            if (rect.top < 120) { // 120px de margen superior
+            const pickerWidth = 240; // Aproximado, ajusta según tu diseño
+            if (rect.left < pickerWidth / 2) {
+                setEmojiPopoverPosition("left");
+            } else if (window.innerWidth - rect.right < pickerWidth / 2) {
+                setEmojiPopoverPosition("right");
+            } else {
+                setEmojiPopoverPosition("center");
+            }
+            if (rect.top < 120) {
                 setOpenDirection("down");
             } else {
                 setOpenDirection("up");
@@ -60,8 +71,22 @@ export default function MessageOptionsDropdown({
         }
     }, [showEmojiPicker]);
 
+    useEffect(() => {
+        if (menuBtnRef.current) {
+            const rect = menuBtnRef.current.getBoundingClientRect();
+            const menuWidth = 200;
+            if (rect.left < menuWidth / 2) {
+                setMenuPopoverPosition("left");
+            } else if (window.innerWidth - rect.right < menuWidth / 2) {
+                setMenuPopoverPosition("right");
+            } else {
+                setMenuPopoverPosition("center");
+            }
+        }
+    }, [showEmojiPicker]);
+
     return (
-        <div className={`absolute ${positionClass} text-gray-100 top-1/2 -translate-y-1/2 z-50`}>
+        <div className={`absolute ${positionClass} text-gray-100 top-1/2 -translate-y-1/2 z-10 `}>
             <div className={`flex items-center gap-1 ${position === "right" ? "flex-row-reverse" : ""}`}>
                 {/* Botón de emoji para reaccionar */}
                 <div className="relative" ref={emojiBtnRef}>
@@ -76,18 +101,23 @@ export default function MessageOptionsDropdown({
                     </button>
                     {/* Selector de emojis */}
                     {showEmojiPicker && (
-                        <div className={
-                            `absolute left-1/2 -translate-x-1/2 
-                            ${openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}
-                            bg-gray-800 p-2 rounded shadow-lg flex gap-2 z-50`
-                        }>
+                        <div
+                            className={
+                                `absolute z-50 bg-gray-800 p-2 rounded shadow-lg flex gap-2 ` +
+                                (openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2") +
+                                (emojiPopoverPosition === "left"
+                                    ? " left-0"
+                                    : emojiPopoverPosition === "right"
+                                    ? " right-0"
+                                    : " left-1/2 -translate-x-1/2")
+                            }
+                            style={{ minWidth: 200, maxWidth: 280 }}
+                        >
                             {EMOJIS.map((emoji) => (
                                 <button
                                     key={emoji}
                                     className={`text-2xl hover:scale-125 transition ${
-                                        userEmoji === emoji
-                                            ? "ring-2 ring-yellow-400"
-                                            : ""
+                                        userEmoji === emoji ? "ring-2 ring-yellow-400" : ""
                                     }`}
                                     onClick={() => {
                                         setShowEmojiPicker(false);
@@ -105,7 +135,7 @@ export default function MessageOptionsDropdown({
                     )}
                 </div>
                 {/* Botón de opciones (tres puntos) */}
-                <Menu as="div" className="relative inline-block text-left">
+                <Menu as="div" className="relative inline-block text-left" ref={menuBtnRef}>
                     <Menu.Button className="flex justify-center items-center w-8 h-8 rounded-full hover:bg-black/40">
                         <EllipsisVerticalIcon className="h-5 w-5" />
                     </Menu.Button>
@@ -118,7 +148,16 @@ export default function MessageOptionsDropdown({
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                     >
-                        <Menu.Items className="absolute right-full mb-2 left-1/2 -translate-x-1/2 w-48 rounded-md bg-gray-800 shadow-lg z-50">
+                        <Menu.Items
+                            className={
+                                `absolute z-50 w-48 rounded-md bg-gray-800 shadow-lg ` +
+                                (menuPopoverPosition === "left"
+                                    ? "left-0"
+                                    : menuPopoverPosition === "right"
+                                    ? "right-0"
+                                    : "left-1/2 -translate-x-1/2")
+                            }
+                        >
                             <div className="px-1 py-1 ">
                                 {/* Opción: Responder */}
                                 <Menu.Item>

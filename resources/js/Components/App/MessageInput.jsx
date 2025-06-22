@@ -43,7 +43,7 @@ const MessageInput = ({
     };
 
     // Envía el mensaje (texto, adjuntos y reply)
-    const onSendClick = () => {
+    const onSendClick = async () => {
         if (messageSending) return;
         if (newMessage.trim() === "" && chosenFiles.length === 0) {
             setInputErrorMessage(
@@ -52,6 +52,48 @@ const MessageInput = ({
             setTimeout(() => setInputErrorMessage(""), 3000);
             return;
         }
+
+        setMessageSending(true);
+
+        // Si hay varios archivos y ningún mensaje de texto, envía cada archivo como mensaje separado
+        if (chosenFiles.length > 1 && newMessage.trim() === "") {
+            for (const fileObj of chosenFiles) {
+                const formData = new FormData();
+                formData.append("attachments[]", fileObj.file);
+                if (conversation.is_user) {
+                    formData.append("receiver_id", conversation.id);
+                } else if (conversation.is_group) {
+                    formData.append("group_id", conversation.id);
+                }
+                if (replyTo) {
+                    formData.append("reply_to_id", replyTo.id);
+                }
+                try {
+                    const response = await axios.post(route("message.store"), formData, {
+                        onUploadProgress: (progressEvent) => {
+                            const progress = Math.round(
+                                (progressEvent.loaded / progressEvent.total) * 100
+                            );
+                            setUploadProgress(progress);
+                        },
+                    });
+                    emit("message.sent", [conversation.id, response.data]);
+                } catch (error) {
+                    const message = error?.response?.data?.message;
+                    setInputErrorMessage(
+                        message || "Ocurrió un error al enviar el mensaje"
+                    );
+                }
+            }
+            setNewMessage("");
+            setMessageSending(false);
+            setUploadProgress(0);
+            setChosenFiles([]);
+            if (onCancelReply) onCancelReply();
+            return;
+        }
+
+        // Caso normal: mensaje de texto y/o un solo archivo
         const formData = new FormData();
         chosenFiles.forEach((file) => {
             formData.append("attachments[]", file.file);
@@ -65,8 +107,6 @@ const MessageInput = ({
         if (replyTo) {
             formData.append("reply_to_id", replyTo.id);
         }
-
-        setMessageSending(true);
 
         axios
             .post(route("message.store"), formData, {

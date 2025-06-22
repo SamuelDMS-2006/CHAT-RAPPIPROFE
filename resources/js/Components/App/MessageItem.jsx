@@ -13,10 +13,10 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
     return (
         <div
             className={
-                "chat z-20 " +
+                "chat z-5 " +
                 (isOwn
-                    ? "chat-end ml-auto max-w-[80%] sm:max-w-[60%]"
-                    : "chat-start max-w-[80%] sm:max-w-[60%]")
+                    ? "chat-end ml-auto max-w-[90%] sm:max-w-[60%]"
+                    : "chat-start max-w-[90%] sm:max-w-[60%]")
             }
         >
             {<UserAvatar user={message.sender} />}
@@ -41,10 +41,14 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
 
             <div
                 className={
-                    "chat-bubble relative w-full " +
+                    "chat-bubble relative " +
                     (message.sender_id === currentUser.id
                         ? " chat-bubble-info"
-                        : "")
+                        : "") +
+                    (message.attachments?.length > 0 &&
+                        message.attachments.some(a => a.mimetype?.includes("pdf"))
+                        ? " max-w-[30vw] min-w-[180px] w-[30vw] p-0"
+                        : " w-full")
                 }
             >
                 <MessageOptionsDropdown
@@ -54,7 +58,7 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
                     position={isOwn ? "left" : "right"}
                 />
                 <div className="chat-message">
-                    <div className="chat-message-content">
+                    <div className="chat-message-content break-words whitespace-pre-line">
                         <ReactMarkdown>{message.message}</ReactMarkdown>
                     </div>
                     <MessageAttachments
