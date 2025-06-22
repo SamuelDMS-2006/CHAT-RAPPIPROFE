@@ -191,9 +191,9 @@ const ChatLayout = ({ children }) => {
     return (
         <>
             {((currentUser.is_admin || currentUser.is_asesor) && (
-                <div className="flex-1 w-full flex overflow-auto">
+                <div className="flex-1 w-full flex overflow-hidden">
                     <div
-                        className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-auto ${
+                        className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
                             selectedConversation ? "-ml-[100%] sm:ml-0" : ""
                         }`}
                     >
@@ -318,12 +318,12 @@ const ChatLayout = ({ children }) => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex-1 flex flex-col overflow-auto">
+                    <div className="flex-1 flex flex-col overflow-hidden">
                         {children}
                     </div>
                 </div>
             )) || (
-                <div className="flex-1 flex flex-col overflow-auto">
+                <div className="flex-1 flex flex-col overflow-hidden">
                     {children}
                 </div>
             )}
