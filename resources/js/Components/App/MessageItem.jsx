@@ -58,7 +58,7 @@ const MessageItem = ({ message, attachmentClick, onReply, onReact }) => {
                     position={isOwn ? "left" : "right"}
                 />
                 <div className="chat-message">
-                    <div className="chat-message-content break-words whitespace-pre-line">
+                    <div className="chat-message-content break-normal whitespace-pre-line pr-4">
                         <ReactMarkdown>{message.message}</ReactMarkdown>
                     </div>
                     <MessageAttachments
