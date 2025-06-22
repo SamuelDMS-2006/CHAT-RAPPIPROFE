@@ -221,7 +221,7 @@ const MessageInput = ({
                 {/* Botón de adjuntar archivos */}
                 <Popover className="relative flex items-center">
                     <Popover.Button className="p-1 text-gray-400 hover:text-gray-300 flex items-center">
-                        <PaperClipIcon className="w-6 h-6" />
+                        <PaperClipIcon className="w-6 h-6 z-10" />
                     </Popover.Button>
                     <Popover.Panel className="absolute z-20 right-0 bottom-full mb-2 bg-slate-700 rounded shadow-lg flex flex-col">
                         <label className="flex items-center gap-2 px-4 py-2 hover:bg-slate-600 cursor-pointer">
@@ -258,7 +258,7 @@ const MessageInput = ({
                         aria-label="Enviar mensaje"
                         type="button"
                     >
-                        <PaperAirplaneIcon className="w-6 h-6 rotate-90" />
+                        <PaperAirplaneIcon className="w-6 h-6 z-10" />
                     </button>
                 )}
             </div>
