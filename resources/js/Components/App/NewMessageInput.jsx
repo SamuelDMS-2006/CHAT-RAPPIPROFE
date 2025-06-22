@@ -20,6 +20,7 @@ const NewMessageInput = ({
     const [suggestions, setSuggestions] = useState([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [quickReplies, setQuickReplies] = useState([]);
+    const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     // Cargar quick replies desde el backend al montar el componente o cambiar el rol
     useEffect(() => {
@@ -47,6 +48,9 @@ const NewMessageInput = ({
                 setShowSuggestions(false);
             }
         } else if (ev.key === "Enter" && !ev.shiftKey) {
+            if (isMobile()) {
+                return;
+            }
             ev.preventDefault();
             onSend();
         }
