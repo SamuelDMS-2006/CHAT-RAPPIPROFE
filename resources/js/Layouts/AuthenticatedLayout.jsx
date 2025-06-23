@@ -118,7 +118,10 @@ export default function Authenticated({ header, children }) {
 
     return (
         <>
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col h-dvh">
+            <div
+                className="bg-gray-100 dark:bg-gray-900 flex flex-col"
+                style={{ height: "100svh" }}
+            >
                 <nav className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
                     <div className="mx-auto px-4 sm:px-6">
                         <div className="flex justify-between h-16">
