@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 #app {
-    height: 100vh;
+    height: 100svh;
 }
 
 .EmojiPickerReact.epr-dark-theme {
