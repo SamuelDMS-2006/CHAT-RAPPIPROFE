@@ -1,6 +1,10 @@
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment, useRef, useState, useEffect } from "react";
-import { EllipsisVerticalIcon, TrashIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
+import {
+    EllipsisVerticalIcon,
+    TrashIcon,
+    ArrowUturnLeftIcon,
+} from "@heroicons/react/24/solid";
 import { useEventBus } from "@/EventBus";
 import { usePage } from "@inertiajs/react";
 
@@ -11,6 +15,7 @@ export default function MessageOptionsDropdown({
     onReact,
     position = "left",
     currentUser,
+    onMenuToggle,
 }) {
     const { emit } = useEventBus();
     currentUser = currentUser || usePage().props.auth.user;
@@ -22,7 +27,9 @@ export default function MessageOptionsDropdown({
     const [menuPopoverPosition, setMenuPopoverPosition] = useState("center"); // 1. Nuevo estado
 
     // Encuentra la reacción del usuario actual (si existe)
-    const userReaction = message.reactions?.find(r => r.user_id === currentUser.id);
+    const userReaction = message.reactions?.find(
+        (r) => r.user_id === currentUser.id
+    );
     const userEmoji = userReaction?.reaction || null;
 
     // Maneja la eliminación del mensaje
@@ -47,9 +54,7 @@ export default function MessageOptionsDropdown({
 
     // Determina la clase de posición del menú principal
     const positionClass =
-        position === "left"
-            ? "right-full"
-            : "left-full flex-row-reverse";
+        position === "left" ? "right-full" : "left-full flex-row-reverse";
 
     // Detecta si el botón está cerca del borde superior y ajusta la dirección del menú
     useEffect(() => {
@@ -86,8 +91,14 @@ export default function MessageOptionsDropdown({
     }, [showEmojiPicker]);
 
     return (
-        <div className={`absolute ${positionClass} text-gray-100 top-1/2 -translate-y-1/2 z-10 `}>
-            <div className={`flex items-center gap-1 ${position === "right" ? "flex-row-reverse" : ""}`}>
+        <div
+            className={`absolute ${positionClass} text-gray-100 top-1/2 -translate-y-1/2`}
+        >
+            <div
+                className={`flex items-center gap-1 ${
+                    position === "right" ? "flex-row-reverse" : ""
+                }`}
+            >
                 {/* Botón de emoji para reaccionar */}
                 <div className="relative" ref={emojiBtnRef}>
                     <button
@@ -104,20 +115,24 @@ export default function MessageOptionsDropdown({
                         <div
                             className={
                                 `absolute z-50 bg-gray-800 p-2 rounded shadow-lg flex gap-2 ` +
-                                (openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2") +
+                                (openDirection === "up"
+                                    ? "bottom-full mb-2"
+                                    : "top-full mt-2") +
                                 (emojiPopoverPosition === "left"
                                     ? " left-0"
                                     : emojiPopoverPosition === "right"
                                     ? " right-0"
                                     : " left-1/2 -translate-x-1/2")
                             }
-                            style={{ minWidth: 200, maxWidth: 280 }}
+                            style={{ minWidth: 200, maxWidth: 300 }}
                         >
                             {EMOJIS.map((emoji) => (
                                 <button
                                     key={emoji}
                                     className={`text-2xl hover:scale-125 transition ${
-                                        userEmoji === emoji ? "ring-2 ring-yellow-400" : ""
+                                        userEmoji === emoji
+                                            ? "ring-2 ring-yellow-400"
+                                            : ""
                                     }`}
                                     onClick={() => {
                                         setShowEmojiPicker(false);
@@ -135,67 +150,86 @@ export default function MessageOptionsDropdown({
                     )}
                 </div>
                 {/* Botón de opciones (tres puntos) */}
-                <Menu as="div" className="relative inline-block text-left" ref={menuBtnRef}>
-                    <Menu.Button className="flex justify-center items-center w-8 h-8 rounded-full hover:bg-black/40">
-                        <EllipsisVerticalIcon className="h-5 w-5" />
-                    </Menu.Button>
-                    <Transition
-                        as={Fragment}
-                        enter="transition ease-out duration-100"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-75"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                    >
-                        <Menu.Items
-                            className={
-                                `absolute z-50 w-48 rounded-md bg-gray-800 shadow-lg ` +
-                                (menuPopoverPosition === "left"
-                                    ? "left-0"
-                                    : menuPopoverPosition === "right"
-                                    ? "right-0"
-                                    : "left-1/2 -translate-x-1/2")
+                <Menu
+                    as="div"
+                    className="relative inline-block text-left"
+                    ref={menuBtnRef}
+                >
+                    {({ open }) => {
+                        useEffect(() => {
+                            if (onMenuToggle) {
+                                onMenuToggle(open);
                             }
-                        >
-                            <div className="px-1 py-1 ">
-                                {/* Opción: Responder */}
-                                <Menu.Item>
-                                    {({ active }) => (
-                                        <button
-                                            onClick={onReply}
-                                            className={`${
-                                                active
-                                                    ? "bg-black/30 text-white"
-                                                    : "text-gray-100"
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                                        >
-                                            <ArrowUturnLeftIcon className="w-4 h-4 mr-2" />
-                                            Responder
-                                        </button>
-                                    )}
-                                </Menu.Item>
-                                {/* Opción: Eliminar (solo para admin) */}
-                                {currentUser.is_admin && (
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                onClick={onMessageDelete}
-                                                className={`${
-                                                    active
-                                                        ? "bg-black/30 text-white"
-                                                        : "text-gray-100"
-                                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                                            >
-                                                <TrashIcon className="w-4 h-4 mr-2" />
-                                                Eliminar
-                                            </button>
-                                        )}
-                                    </Menu.Item>
-                                )}
-                            </div>
-                        </Menu.Items>
-                    </Transition>
+                        }, [open, onMenuToggle]);
+
+                        return (
+                            <>
+                                <Menu.Button className="flex justify-center items-center w-8 h-8 rounded-full hover:bg-black/40">
+                                    <EllipsisVerticalIcon className="h-5 w-5" />
+                                </Menu.Button>
+                                <Transition
+                                    as={Fragment}
+                                    enter="transition ease-out duration-100"
+                                    enterFrom="transform opacity-0 scale-95"
+                                    enterTo="transform opacity-100 scale-100"
+                                    leave="transition ease-in duration-75"
+                                    leaveFrom="transform opacity-100 scale-100"
+                                    leaveTo="transform opacity-0 scale-95"
+                                >
+                                    <Menu.Items
+                                        className={
+                                            `absolute w-48 rounded-md bg-gray-800 shadow-lg ` +
+                                            (menuPopoverPosition === "left"
+                                                ? "left-0"
+                                                : menuPopoverPosition ===
+                                                  "right"
+                                                ? "right-0"
+                                                : "left-1/2 -translate-x-1/2")
+                                        }
+                                    >
+                                        <div className="px-1 py-1 ">
+                                            {/* Opción: Responder */}
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <button
+                                                        onClick={onReply}
+                                                        className={`${
+                                                            active
+                                                                ? "bg-black/30 text-white"
+                                                                : "text-gray-100"
+                                                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                                    >
+                                                        <ArrowUturnLeftIcon className="w-4 h-4 mr-2" />
+                                                        Responder
+                                                    </button>
+                                                )}
+                                            </Menu.Item>
+                                            {/* Opción: Eliminar (solo para admin) */}
+                                            {currentUser.is_admin && (
+                                                <Menu.Item>
+                                                    {({ active }) => (
+                                                        <button
+                                                            onClick={
+                                                                onMessageDelete
+                                                            }
+                                                            className={`${
+                                                                active
+                                                                    ? "bg-black/30 text-white"
+                                                                    : "text-gray-100"
+                                                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                                        >
+                                                            <TrashIcon className="w-4 h-4 mr-2" />
+                                                            Eliminar
+                                                        </button>
+                                                    )}
+                                                </Menu.Item>
+                                            )}
+                                        </div>
+                                    </Menu.Items>
+                                </Transition>
+                            </>
+                        );
+                    }}
                 </Menu>
             </div>
         </div>

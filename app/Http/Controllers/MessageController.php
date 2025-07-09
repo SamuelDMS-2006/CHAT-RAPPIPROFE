@@ -146,10 +146,6 @@ class MessageController extends Controller
      */
     public function destroy(Message $message)
     {
-        // Solo el propietario puede eliminar el mensaje
-        if ($message->sender_id !== auth()->id()) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $group = null;
         $conversation = null;

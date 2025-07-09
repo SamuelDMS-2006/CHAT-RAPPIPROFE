@@ -31,36 +31,22 @@ const ConversationItem = ({
     }
 
     const color_status = [
-        {
-            id: 1,
-            name: "gris",
-            color: "border-gray-500",
-        },
-        {
-            id: 2,
-            name: "amarillo",
-            color: "border-yellow-500",
-        },
-        {
-            id: 3,
-            name: "verde",
-            color: "border-green-500",
-        },
-        {
-            id: 4,
-            name: "naranja",
-            color: "border-orange-500",
-        },
-        {
-            id: 5,
-            name: "rojo",
-            color: "border-red-500",
-        },
+        { id: 1, name: "gris", color: "border-gray-500" },
+        { id: 2, name: "amarillo", color: "border-yellow-500" },
+        { id: 3, name: "verde", color: "border-green-500" },
+        { id: 4, name: "naranja", color: "border-orange-500" },
+        { id: 5, name: "rojo", color: "border-red-500" },
     ];
 
-    const statusColor =
-        color_status.find((s) => s.id === conversation.code_status)?.color ??
-        "border-gray-500";
+    const statusColor = conversation.is_group
+        ? color_status.find((s) => s.id === conversation.code_status)?.color ??
+          "border-gray-500"
+        : "border-transparent";
+
+    const asesor =
+        conversation.is_group && conversation.users
+            ? conversation.users.find((u) => u.id === conversation.asesor)
+            : null;
 
     return (
         <Link
@@ -102,11 +88,20 @@ const ConversationItem = ({
                         </span>
                     )}
                 </div>
-                {conversation.last_message && (
-                    <p className="text-xs text-nowrap overflow-hidden text-ellipsis">
-                        {conversation.last_message}
-                    </p>
-                )}
+
+                <div className="block gap-1 justify-between items-center">
+                    {conversation.is_group && (
+                        <p className="text-xm font-semibold overflow-hidden text-nowrap text-ellipsis">
+                            Asesor: {asesor?.name}
+                        </p>
+                    )}
+
+                    {conversation.last_message && (
+                        <p className="text-xs text-nowrap overflow-hidden text-ellipsis">
+                            {conversation.last_message}
+                        </p>
+                    )}
+                </div>
             </div>
             {conversation.is_user && currentUser.id != conversation.id && (
                 <UserOptionsDropdown conversation={conversation} />

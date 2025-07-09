@@ -1,13 +1,13 @@
 import ConversationItem from "@/Components/App/ConversationItem";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
+import { Menu, Transition } from "@headlessui/react";
 import PrimaryButton from "@/Components/PrimaryButton";
 import { useEventBus } from "@/EventBus";
 import { PencilSquareIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
 import NewUserModal from "@/Components/App/NewUserModal";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 
 const ChatLayout = ({ children }) => {
     const page = usePage();
@@ -22,14 +22,38 @@ const ChatLayout = ({ children }) => {
     const { emit, on } = useEventBus();
     const [searchTerm, setSearchTerm] = useState("");
     const [showNewUserModal, setShowNewUserModal] = useState(false);
+    const [codeStatusFilter, setCodeStatusFilter] = useState("all");
+
+    const status = [
+        { id: 1, name: "gris", color: "bg-gray-500" },
+        { id: 2, name: "amarillo", color: "bg-yellow-500" },
+        { id: 3, name: "verde", color: "bg-green-500" },
+        { id: 4, name: "naranja", color: "bg-orange-500" },
+        { id: 5, name: "rojo", color: "bg-red-500" },
+    ];
 
     const onSearch = (ev) => {
         const search = ev.target.value.toLowerCase();
         setSearchTerm(search);
     };
 
-    const filterBySearch = (list) =>
-        list.filter((c) => c.name.toLowerCase().includes(searchTerm));
+    const filterConversations = (list) => {
+        let filteredList = list.filter((c) =>
+            c.name.toLowerCase().includes(searchTerm)
+        );
+
+        if (codeStatusFilter !== "all") {
+            filteredList = filteredList.filter((c) => {
+                if (c.is_group) {
+                    return c.code_status == codeStatusFilter;
+                }
+
+                return false;
+            });
+        }
+
+        return filteredList;
+    };
 
     const isUserOnline = (userId) => onlineUsers[userId];
 
@@ -128,6 +152,12 @@ const ChatLayout = ({ children }) => {
     useEffect(() => {
         setSortedConversations(
             localConversations.sort((a, b) => {
+                const aIsPriority = a.code_status == 1 || a.code_status == 2;
+                const bIsPriority = b.code_status == 1 || b.code_status == 2;
+
+                if (aIsPriority && !bIsPriority) return -1;
+                if (!aIsPriority && bIsPriority) return 1;
+
                 if (a.blocked_at && b.blocked_at) {
                     return a.blocked_at > b.blocked_at ? 1 : -1;
                 } else if (a.blocked_at) {
@@ -226,95 +256,246 @@ const ChatLayout = ({ children }) => {
                                 placeholder="Filter users and groups"
                                 className="w-full"
                             />
+
+                            <Menu
+                                as="div"
+                                className="relative inline-block text-left w-full"
+                            >
+                                <Menu.Button
+                                    className={`flex items-center rounded-full py-2 text-gray-100 hover:bg-black/30 w-full `}
+                                >
+                                    <div className="items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150 w-full">
+                                        Filtrar por estado
+                                    </div>
+                                </Menu.Button>
+                                <Transition
+                                    as={Fragment}
+                                    enter="transition ease-out duration-100"
+                                    enterFrom="transform opacity-0 scale-95"
+                                    enterTo="transform opacity-100 scale-100"
+                                    leave="transition ease-in duration-75"
+                                    leaveFrom="transform opacity-100 scale-100"
+                                    leaveTo="transform opacity-0 scale-95"
+                                >
+                                    <Menu.Items className="top-10 right-0 w-full rounded-md bg-gray-800 shadow-lg z-50">
+                                        <div className="px-1 py-1">
+                                            <label className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    className="form-radio text-indigo-600"
+                                                    name="code_status_filter"
+                                                    value="all"
+                                                    checked={
+                                                        codeStatusFilter ===
+                                                        "all"
+                                                    }
+                                                    onChange={(e) =>
+                                                        setCodeStatusFilter(
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                                <span className="ml-2 text-sm">
+                                                    Todos
+                                                </span>
+                                            </label>
+                                            {status &&
+                                                status.map((status) => (
+                                                    <Menu.Item key={status.id}>
+                                                        {({ active }) => (
+                                                            <label className="items-center w-full inline-flex py-2">
+                                                                <input
+                                                                    type="radio"
+                                                                    className="form-radio text-indigo-600"
+                                                                    name="code_status_filter"
+                                                                    value={`${status.id}`}
+                                                                    checked={
+                                                                        codeStatusFilter ===
+                                                                        String(
+                                                                            status.id
+                                                                        )
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
+                                                                        setCodeStatusFilter(
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <span className="ml-2 text-sm">
+                                                                    {
+                                                                        status.name
+                                                                    }
+                                                                </span>
+                                                            </label>
+                                                        )}
+                                                    </Menu.Item>
+                                                ))}
+                                        </div>
+                                    </Menu.Items>
+                                </Transition>
+                            </Menu>
                         </div>
                         <div className="flex-1 overflow-auto">
                             <div className="p-3">
                                 {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                conversation.is_group
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`group_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
+                                    (() => {
+                                        const filteredGroups =
+                                            filterConversations(
+                                                sortedConversations.filter(
+                                                    (conversation) =>
+                                                        conversation.is_group
+                                                )
+                                            );
+
+                                        return filteredGroups.length > 0 ? (
+                                            filteredGroups.map(
+                                                (conversation) => (
+                                                    <ConversationItem
+                                                        key={`group_${conversation.id}`}
+                                                        conversation={
+                                                            conversation
+                                                        }
+                                                        online={
+                                                            !!isUserOnline(
+                                                                conversation.id
+                                                            )
+                                                        }
+                                                        selectedConversation={
+                                                            selectedConversation
+                                                        }
+                                                    />
+                                                )
+                                            )
+                                        ) : (
+                                            <div className="text-gray-400 text-sm italic px-2">
+                                                No encontrado
+                                            </div>
+                                        );
+                                    })()}
                             </div>
+
                             <div className="p-3">
                                 Admins
                                 {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                conversation.is_admin
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`admin_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
+                                    (() => {
+                                        const filteredAdmins =
+                                            filterConversations(
+                                                sortedConversations.filter(
+                                                    (conversation) =>
+                                                        conversation.is_admin
+                                                )
+                                            );
+
+                                        return filteredAdmins.length > 0 ? (
+                                            filteredAdmins.map(
+                                                (conversation) => (
+                                                    <ConversationItem
+                                                        key={`admin_${conversation.id}`}
+                                                        conversation={
+                                                            conversation
+                                                        }
+                                                        online={
+                                                            !!isUserOnline(
+                                                                conversation.id
+                                                            )
+                                                        }
+                                                        selectedConversation={
+                                                            selectedConversation
+                                                        }
+                                                    />
+                                                )
+                                            )
+                                        ) : (
+                                            <div className="text-gray-400 text-sm italic px-2">
+                                                No encontrado
+                                            </div>
+                                        );
+                                    })()}
                             </div>
 
                             <div className="p-3">
-                                Asesors
+                                Asesores
                                 {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                conversation.is_asesor &&
-                                                !conversation.is_admin
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`asesor_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
+                                    (() => {
+                                        const filteredAdmins =
+                                            filterConversations(
+                                                sortedConversations.filter(
+                                                    (conversation) =>
+                                                        conversation.is_asesor &&
+                                                        !conversation.is_admin
+                                                )
+                                            );
+
+                                        return filteredAdmins.length > 0 ? (
+                                            filteredAdmins.map(
+                                                (conversation) => (
+                                                    <ConversationItem
+                                                        key={`asesor_${conversation.id}`}
+                                                        conversation={
+                                                            conversation
+                                                        }
+                                                        online={
+                                                            !!isUserOnline(
+                                                                conversation.id
+                                                            )
+                                                        }
+                                                        selectedConversation={
+                                                            selectedConversation
+                                                        }
+                                                    />
+                                                )
+                                            )
+                                        ) : (
+                                            <div className="text-gray-400 text-sm italic px-2">
+                                                No encontrado
+                                            </div>
+                                        );
+                                    })()}
                             </div>
 
                             <div className="p-3">
-                                users
+                                Usuarios
                                 {sortedConversations &&
-                                    filterBySearch(
-                                        sortedConversations.filter(
-                                            (conversation) =>
-                                                !conversation.is_group &&
-                                                !conversation.is_admin &&
-                                                !conversation.is_asesor
-                                        )
-                                    ).map((conversation) => (
-                                        <ConversationItem
-                                            key={`user_${conversation.id}`}
-                                            conversation={conversation}
-                                            online={
-                                                !!isUserOnline(conversation.id)
-                                            }
-                                            selectedConversation={
-                                                selectedConversation
-                                            }
-                                        />
-                                    ))}
+                                    (() => {
+                                        const filteredAdmins =
+                                            filterConversations(
+                                                sortedConversations.filter(
+                                                    (conversation) =>
+                                                        !conversation.is_group &&
+                                                        !conversation.is_admin &&
+                                                        !conversation.is_asesor
+                                                )
+                                            );
+
+                                        return filteredAdmins.length > 0 ? (
+                                            filteredAdmins.map(
+                                                (conversation) => (
+                                                    <ConversationItem
+                                                        key={`user_${conversation.id}`}
+                                                        conversation={
+                                                            conversation
+                                                        }
+                                                        online={
+                                                            !!isUserOnline(
+                                                                conversation.id
+                                                            )
+                                                        }
+                                                        selectedConversation={
+                                                            selectedConversation
+                                                        }
+                                                    />
+                                                )
+                                            )
+                                        ) : (
+                                            <div className="text-gray-400 text-sm italic px-2">
+                                                No encontrado
+                                            </div>
+                                        );
+                                    })()}
                             </div>
                         </div>
                     </div>
