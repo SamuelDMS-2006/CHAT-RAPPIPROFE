@@ -300,6 +300,20 @@ const ConversationHeader = ({ selectedConversation, onGroup }) => {
                                             {currentUser.is_admin && (
                                                 <>
                                                     <Menu.Item>
+                                                        <GroupUsersPopover
+                                                            users={
+                                                                selectedConversation.users
+                                                            }
+                                                        />
+                                                    </Menu.Item>
+                                                    <Menu.Item>
+                                                        <GroupDescriptionPopover
+                                                            description={
+                                                                selectedConversation.description
+                                                            }
+                                                        />
+                                                    </Menu.Item>
+                                                    <Menu.Item>
                                                         {({ active }) => (
                                                             <button
                                                                 onClick={() =>

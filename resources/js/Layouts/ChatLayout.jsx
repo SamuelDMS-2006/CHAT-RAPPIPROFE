@@ -44,11 +44,7 @@ const ChatLayout = ({ children }) => {
 
         if (codeStatusFilter !== "all") {
             filteredList = filteredList.filter((c) => {
-                if (c.is_group) {
-                    return c.code_status == codeStatusFilter;
-                }
-
-                return false;
+                return !c.is_group || c.code_status == codeStatusFilter;
             });
         }
 

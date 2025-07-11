@@ -11,10 +11,11 @@ export default function GroupUsersPopover({ users = [] }) {
                 <>
                     <Popover.Button
                         className={`${
-                            open ? "text-gray-200" : "text-gray-400"
-                        } hover:text-gray-200`}
+                            open ? "bg-black/30 text-white" : "text-gray-100"
+                        } hover:text-gray-200 group flex w-full items-center rounded-md px-2 py-2 text-sm hover:bg-black/30`}
                     >
                         <UsersIcon className="w-4" />
+                        <span className="px-2">Miembros</span>
                     </Popover.Button>
                     <Transition
                         as={Fragment}

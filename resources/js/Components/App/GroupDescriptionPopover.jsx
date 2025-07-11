@@ -4,15 +4,16 @@ import { Fragment } from "react";
 
 export default function GroupDescriptionPopover({ description }) {
     return (
-        <Popover className="relative">
+        <Popover className="relative ">
             {({ open }) => (
                 <>
                     <Popover.Button
                         className={`${
-                            open ? "text-gray-200" : "text-gray-400"
-                        } hover:text-gray-200`}
+                            open ? "bg-black/30 text-white" : "text-gray-100"
+                        } hover:text-gray-200 group flex w-full items-center rounded-md px-2 py-2 text-sm hover:bg-black/30`}
                     >
                         <ExclamationCircleIcon className="w-4" />
+                        <span className="px-2">Descripción</span>
                     </Popover.Button>
                     <Transition
                         as={Fragment}
@@ -27,7 +28,7 @@ export default function GroupDescriptionPopover({ description }) {
                             <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
                                 <div className="bg-gray-800 p-4">
                                     <h2 className="text-lg mb-3">
-                                        Description
+                                        Descripción
                                     </h2>
                                     {description && (
                                         <div className="text-xs">
@@ -36,7 +37,7 @@ export default function GroupDescriptionPopover({ description }) {
                                     )}
                                     {!description && (
                                         <div className="text-xs text-gray-500 text-center py-4">
-                                            No description is defined.
+                                            El grupo no tiene una
                                         </div>
                                     )}
                                 </div>

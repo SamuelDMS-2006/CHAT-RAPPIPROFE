@@ -15,10 +15,6 @@ import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
 
-/**
- * Componente para la entrada y envío de mensajes, adjuntos y respuestas (reply).
- * Mejorado para parecerse a WhatsApp, ser responsivo y tener todos los controles alineados verticalmente.
- */
 const MessageInput = ({
     conversation = null,
     replyTo = null,
@@ -34,12 +30,18 @@ const MessageInput = ({
     // Maneja la selección de archivos adjuntos
     const onFileChange = (ev) => {
         const files = ev.target.files;
-        const updatedFiles = [...files].map((file) => ({
-            file: file,
-            url: URL.createObjectURL(file),
-        }));
+
+        const updatedFiles = [...files].map((file) => {
+            return {
+                file: file,
+                url: URL.createObjectURL(file),
+            };
+        });
         ev.target.value = null;
-        setChosenFiles((prevFiles) => [...prevFiles, ...updatedFiles]);
+
+        setChosenFiles((prevFiles) => {
+            return [...prevFiles, ...updatedFiles];
+        });
     };
 
     // Envía el mensaje (texto, adjuntos y reply)
@@ -69,14 +71,20 @@ const MessageInput = ({
                     formData.append("reply_to_id", replyTo.id);
                 }
                 try {
-                    const response = await axios.post(route("message.store"), formData, {
-                        onUploadProgress: (progressEvent) => {
-                            const progress = Math.round(
-                                (progressEvent.loaded / progressEvent.total) * 100
-                            );
-                            setUploadProgress(progress);
-                        },
-                    });
+                    const response = await axios.post(
+                        route("message.store"),
+                        formData,
+                        {
+                            onUploadProgress: (progressEvent) => {
+                                const progress = Math.round(
+                                    (progressEvent.loaded /
+                                        progressEvent.total) *
+                                        100
+                                );
+                                setUploadProgress(progress);
+                            },
+                        }
+                    );
                     emit("message.sent", [conversation.id, response.data]);
                 } catch (error) {
                     const message = error?.response?.data?.message;

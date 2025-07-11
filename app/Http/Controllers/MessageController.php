@@ -101,12 +101,11 @@ class MessageController extends Controller
         $data['sender_id'] = auth()->id();
         $receiverId = $data['receiver_id'] ?? null;
         $groupId = $data['group_id'] ?? null;
+
         $files = $data['attachments'] ?? [];
 
-        // Crea el mensaje
         $message = Message::create($data);
 
-        // Procesa y guarda los adjuntos si existen
         $attachments = [];
         if ($files) {
             foreach ($files as $file) {
@@ -126,18 +125,17 @@ class MessageController extends Controller
             $message->attachments = $attachments;
         }
 
-        // Actualiza la conversación o grupo con el último mensaje
+
         if ($receiverId) {
             Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
         }
+
         if ($groupId) {
             Group::updateGroupWithMessage($groupId, $message);
         }
 
-        // Dispara el evento para comunicación en tiempo real
         SocketMessage::dispatch($message);
 
-        // Devuelve el mensaje como recurso
         return new MessageResource($message);
     }
 
